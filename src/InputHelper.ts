@@ -1,8 +1,17 @@
 import {warning as coreWarning, getInput as coreGetInput} from '@actions/core';
 import {context} from '@actions/github';
-import {Inferred} from './typings/Inferred';
-import {Inputs} from './typings/Inputs';
 import {getErrorString} from './UtilsHelper';
+
+export interface Inputs {
+  githubRepo: string;
+  githubToken: string;
+  pushBefore: string;
+  pushAfter: string;
+  prNumber: number;
+  configPath: string;
+  event: string;
+  [key: string]: string | number;
+}
 
 /**
  * @function getInputs
@@ -47,7 +56,6 @@ export function getInputs(): Inputs {
       event: context.eventName,
     } as Inputs;
   } catch (error) {
-    throw error
     const eString = `Received an issue getting action inputs.`;
     const retVars = Object.fromEntries(
       Object.entries(process.env).filter(
@@ -62,6 +70,14 @@ export function getInputs(): Inputs {
     );
   }
 }
+
+export interface Inferred {
+  pr?: number;
+  before?: string;
+  after?: string;
+  [key: string]: string | number | undefined;
+}
+
 /**
  * @function inferInput
  * @param before BASE commit sha to compare

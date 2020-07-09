@@ -1,5 +1,12 @@
 import {setFailed} from '@actions/core';
-import {ActionError} from './typings/ActionError';
+
+export interface ActionError {
+  error: string;
+  from: string;
+  message: string;
+  payload: string;
+}
+
 /**
  * @function getErrorString
  * @param name name of error

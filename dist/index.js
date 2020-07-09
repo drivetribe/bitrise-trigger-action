@@ -5650,7 +5650,7 @@ const UtilsHelper_1 = __webpack_require__(795);
  */
 function getInputs() {
     try {
-        const githubToken = core_1.getInput('githubToken') || process.env.GITHUB_TOKEN || false;
+        const githubToken = core_1.getInput('repo-token') || process.env.GITHUB_TOKEN || false;
         if (!githubToken)
             throw new Error(UtilsHelper_1.getErrorString('getInputs Error', 500, getInputs.name, 'Received no token, a token is a requirement.'));
         let prNumber;

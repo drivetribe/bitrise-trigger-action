@@ -1,7 +1,18 @@
 import {GitHub} from '@actions/github';
-import {GitHubFile} from './typings/GitHubFile';
-import {Inferred} from './typings/Inferred';
+import {Inferred} from './InputHelper';
 import {getErrorString} from './UtilsHelper';
+
+export interface GitHubFile {
+  added: string;
+  modified: string;
+  removed: string;
+  renamed: string;
+  filename: string;
+  status: string;
+  previous_filename: string;
+  distinct: boolean;
+}
+
 /**
  * @function initClient
  * @throws {Error} not sure what might trigger this, but it will throw an error.

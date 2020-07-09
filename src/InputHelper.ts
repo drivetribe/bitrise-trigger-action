@@ -47,6 +47,7 @@ export function getInputs(): Inputs {
       event: context.eventName,
     } as Inputs;
   } catch (error) {
+    throw error
     const eString = `Received an issue getting action inputs.`;
     const retVars = Object.fromEntries(
       Object.entries(process.env).filter(

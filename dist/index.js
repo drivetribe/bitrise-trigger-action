@@ -2630,92 +2630,51 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 const core = __importStar(__webpack_require__(470));
 const github = __importStar(__webpack_require__(469));
+const InputHelper_1 = __webpack_require__(384);
+const GithubHelper_1 = __webpack_require__(757);
 const yaml = __importStar(__webpack_require__(414));
 const minimatch_1 = __webpack_require__(595);
-function run() {
-    return __awaiter(this, void 0, void 0, function* () {
-        try {
-            const token = core.getInput('repo-token', { required: true });
-            const configPath = core.getInput('configuration-path', { required: true });
-            const prNumber = getPrNumber();
-            if (!prNumber) {
-                console.log('Could not get pull request number from context, exiting');
-                return;
-            }
-            const client = new github.GitHub(token);
-            core.debug(`fetching changed files for pr #${prNumber}`);
-            const changedFiles = yield getChangedFiles(client, prNumber);
-            const labelGlobs = yield getLabelGlobs(client, configPath);
-            const labels = [];
-            for (const [label, globs] of labelGlobs.entries()) {
-                core.debug(`processing ${label}`);
-                if (checkGlobs(changedFiles, globs)) {
-                    labels.push(label);
-                }
-            }
-            // if (labels.length > 0) {
-            //   await addLabels(client, prNumber, labels);
-            // }
-        }
-        catch (error) {
-            core.error(error);
-            core.setFailed(error.message);
-        }
-    });
-}
-function getPrNumber() {
-    const pullRequest = github.context.payload.pull_request;
-    if (!pullRequest) {
-        return undefined;
+async function run() {
+    try {
+        const inputs = InputHelper_1.getInputs();
+        // parse input
+        const inferred = InputHelper_1.inferInput(inputs.pushBefore, inputs.pushAfter, inputs.prNumber);
+        const client = GithubHelper_1.initClient(inputs.githubToken);
+        const changedFilesArray = await GithubHelper_1.getChangedFiles(client, inputs.githubRepo, inferred);
+        console.log('changedFilesArray', changedFilesArray);
+        const labelGlobs = await getLabelGlobs(client, inputs.configPath);
+        console.log('labelGlobs', labelGlobs);
+        // const labels: string[] = [];
+        // for (const [label, globs] of labelGlobs.entries()) {
+        //   core.debug(`processing ${label}`);
+        //   if (checkGlobs(changedFilesArray, globs)) {
+        //     labels.push(label);
+        //   }
+        // }
     }
-    return pullRequest.number;
+    catch (error) {
+        core.error(error);
+        core.setFailed(error.message);
+    }
 }
-function getChangedFiles(client, prNumber) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const listFilesResponse = yield client.pulls.listFiles({
-            owner: github.context.repo.owner,
-            repo: github.context.repo.repo,
-            pull_number: prNumber,
-        });
-        const changedFiles = listFilesResponse.data.map(f => f.filename);
-        core.debug('found changed files:');
-        for (const file of changedFiles) {
-            core.debug('  ' + file);
-        }
-        return changedFiles;
-    });
+async function getLabelGlobs(client, configurationPath) {
+    const configurationContent = await fetchContent(client, configurationPath);
+    // loads (hopefully) a `{[label:string]: string | StringOrMatchConfig[]}`, but is `any`:
+    const configObject = yaml.safeLoad(configurationContent);
+    // transform `any` => `Map<string,StringOrMatchConfig[]>` or throw if yaml is malformed:
+    return getLabelGlobMapFromObject(configObject);
 }
-function getLabelGlobs(client, configurationPath) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const configurationContent = yield fetchContent(client, configurationPath);
-        // loads (hopefully) a `{[label:string]: string | StringOrMatchConfig[]}`, but is `any`:
-        const configObject = yaml.safeLoad(configurationContent);
-        // transform `any` => `Map<string,StringOrMatchConfig[]>` or throw if yaml is malformed:
-        return getLabelGlobMapFromObject(configObject);
+async function fetchContent(client, repoPath) {
+    const response = await client.repos.getContents({
+        owner: github.context.repo.owner,
+        repo: github.context.repo.repo,
+        path: repoPath,
+        ref: github.context.sha,
     });
-}
-function fetchContent(client, repoPath) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const response = yield client.repos.getContents({
-            owner: github.context.repo.owner,
-            repo: github.context.repo.repo,
-            path: repoPath,
-            ref: github.context.sha,
-        });
-        return Buffer.from(response.data.content, response.data.encoding).toString();
-    });
+    return Buffer.from(response.data.content, response.data.encoding).toString();
 }
 function getLabelGlobMapFromObject(configObject) {
     const labelGlobs = new Map();
@@ -2743,6 +2702,7 @@ function toMatchConfig(config) {
 function printPattern(matcher) {
     return (matcher.negate ? '!' : '') + matcher.pattern;
 }
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function checkGlobs(changedFiles, globs) {
     for (const glob of globs) {
         core.debug(` checking pattern ${JSON.stringify(glob)}`);
@@ -5669,6 +5629,109 @@ function deprecate (message) {
   console.warn(`DEPRECATED (@octokit/rest): ${message}`)
   loggedMessages[message] = 1
 }
+
+
+/***/ }),
+
+/***/ 384:
+/***/ (function(__unusedmodule, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.inferInput = exports.getInputs = void 0;
+const core_1 = __webpack_require__(470);
+const github_1 = __webpack_require__(469);
+const UtilsHelper_1 = __webpack_require__(795);
+/**
+ * @function getInputs
+ * @description reads the inputs to the action with core.getInput and returns object
+ * @returns {Inputs} object of inputs for the github action
+ */
+function getInputs() {
+    try {
+        const githubToken = core_1.getInput('githubToken') || process.env.GITHUB_TOKEN || false;
+        if (!githubToken)
+            throw new Error(UtilsHelper_1.getErrorString('getInputs Error', 500, getInputs.name, 'Received no token, a token is a requirement.'));
+        let prNumber;
+        if (typeof github_1.context.issue.number !== 'undefined') {
+            if (+core_1.getInput('prNumber') !== github_1.context.issue.number &&
+                core_1.getInput('prNumber')) {
+                prNumber = +core_1.getInput('prNumber');
+            }
+            else {
+                prNumber = github_1.context.issue.number;
+            }
+        }
+        else {
+            prNumber = +core_1.getInput('prNumber') || NaN;
+        }
+        return {
+            githubRepo: `${github_1.context.repo.owner}/${github_1.context.repo.repo}`,
+            githubToken,
+            pushBefore: github_1.context.payload.before === undefined ? false : github_1.context.payload.before,
+            pushAfter: github_1.context.payload.after === undefined ? false : github_1.context.payload.after,
+            prNumber,
+            configPath: core_1.getInput('configuration-path', { required: true }),
+            event: github_1.context.eventName,
+        };
+    }
+    catch (error) {
+        const eString = `Received an issue getting action inputs.`;
+        const retVars = Object.fromEntries(Object.entries(process.env).filter(key => key[0].includes('GITHUB') ||
+            key[0].includes('INPUT_') ||
+            key[0] === 'HOME'));
+        throw new Error(UtilsHelper_1.getErrorString('getInputs Error', 500, getInputs.name, eString, retVars));
+    }
+}
+exports.getInputs = getInputs;
+/**
+ * @function inferInput
+ * @param before BASE commit sha to compare
+ * @param after HEAD commit sha to compare
+ * @param pr pr number to get changed files for
+ * @returns {Inferred} object of inferred input for the action
+ */
+function inferInput(before, after, pr) {
+    const event = github_1.context.eventName;
+    const weirdInput = `Received event from ${event}, but also received a before(${before}) or after(${after}) value.\n I am assuming you want to use a Push event but forgot something, so I'm giving you a message.`;
+    const allInput = `Received event from ${event}, but received a before(${before}), after(${after}), and PR(${pr}).\n I am assuming you want to use one or the other but I am giving you Push.`;
+    if (event === 'pull_request') {
+        if (before &&
+            after &&
+            (before !== github_1.context.payload.before || after !== github_1.context.payload.after))
+            return { before, after }; // PR(push) - pull_request event with push inputs | PUSH
+        if (before || after)
+            core_1.warning(weirdInput); // PR(push) - pull_request event with single push input | PR*
+        return { pr }; // PR - pull_request event with no push inputs | PR
+    }
+    if (event === 'push') {
+        if (pr)
+            return { pr }; // Push(PR) - push event with pr inputs | PR
+        return { before, after }; // Push - push event with no pr inputs | PUSH
+    }
+    if (pr) {
+        if (before && after) {
+            core_1.warning(allInput); // Not PR or Push - all inputs | PUSH*
+            if (event === 'issue_comment')
+                return { before, after }; // If you explicitly set a before/after in an issue comment it will return those
+            return { pr }; // Not PR or Push - pr inputs | PR if a PR before and after assume its a synchronize and return the whole PR
+        }
+        if (before || after)
+            core_1.warning(weirdInput); // Not PR or Push - pull_request event with single push input | PR*
+        return { pr }; // Not PR or Push - pr inputs | PR
+    }
+    if (before || after) {
+        if (!(before && after)) {
+            const eString = `Received event from ${event}, but only received a before(${before}) or after(${after}).\n I need both of these if you want to use a Push event.`;
+            throw new Error(UtilsHelper_1.getErrorString('inferInput Error', 500, inferInput.name, eString));
+        }
+        return { before, after }; // Not PR or Push - push inputs | PUSH
+    }
+    const eString = `Received event from ${event}, but received no inputs. {event_name:${event}, pr: ${+pr}, before:${before}, after:${after}}`;
+    throw new Error(UtilsHelper_1.getErrorString('inferInput Error', 500, inferInput.name, eString));
+}
+exports.inferInput = inferInput;
 
 
 /***/ }),
@@ -14064,6 +14127,128 @@ exports.request = request;
 
 /***/ }),
 
+/***/ 757:
+/***/ (function(__unusedmodule, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.getChangedFiles = exports.getChangedPushFiles = exports.getChangedPRFiles = exports.initClient = void 0;
+const github_1 = __webpack_require__(469);
+const UtilsHelper_1 = __webpack_require__(795);
+/**
+ * @function initClient
+ * @throws {Error} not sure what might trigger this, but it will throw an error.
+ * @param token github token to add to client
+ * @returns authenticated github client
+ */
+function initClient(token) {
+    try {
+        return new github_1.GitHub(token);
+    }
+    catch (error) {
+        const eString = `There was an error creating github client. Please check your token.`;
+        throw new Error(UtilsHelper_1.getErrorString(error.name, error.status, initClient.name, eString, error));
+    }
+}
+exports.initClient = initClient;
+/**
+ * @function getChangedPRFiles
+ * @throws {Error} when a 404 or other is received.  404 can be bad repo, owner, pr, or unauthenticated
+ * @param client authenticated github client (possibly un-authenticated if public)
+ * @param repo  repo string. file-changes-action
+ * @param owner owner string.  trilom
+ * @param pullNumber pr number to get changed files for
+ * @returns Promise of array of changed files
+ */
+async function getChangedPRFiles(client, repo, owner, pullNumber) {
+    try {
+        const options = client.pulls.listFiles.endpoint.merge({
+            owner,
+            repo,
+            pull_number: pullNumber,
+        });
+        const files = await client.paginate(options, response => response.data);
+        return files;
+    }
+    catch (error) {
+        const eString = `There was an error getting change files for repo:${repo} owner:${owner} pr:${pullNumber}`;
+        let ePayload;
+        if (error.name === 'HttpError' && +error.status === 404)
+            ePayload = UtilsHelper_1.getErrorString(error.name, error.status, getChangedPRFiles.name, eString, error);
+        else
+            ePayload = UtilsHelper_1.getErrorString(`Unknown Error:${error.name || ''}`, error.status, getChangedPRFiles.name, eString, error.message);
+        throw new Error(ePayload);
+    }
+}
+exports.getChangedPRFiles = getChangedPRFiles;
+/**
+ * @function getChangedPushFiles
+ * @throws {Error} when a 404 or other is received.  404 can be bad repo, owner, sha, or unauthenticated
+ * @param client authenticated github client (possibly un-authenticated if public)
+ * @param repo  repo string. file-changes-action
+ * @param owner owner string.  trilom
+ * @param base BASE commit sha to compare
+ * @param head HEAD commit sha to compare
+ * @returns Promise of array of changed files
+ */
+async function getChangedPushFiles(client, repo, owner, base, head) {
+    try {
+        const options = client.repos.compareCommits.endpoint.merge({
+            owner,
+            repo,
+            base,
+            head,
+        });
+        const files = await client.paginate(options, response => response.data.files);
+        return files;
+    }
+    catch (error) {
+        const eString = `There was an error getting change files for repo:${repo} owner:${owner} base:${base} head:${head}`;
+        let ePayload;
+        if (error.name === 'HttpError' && +error.status === 404)
+            ePayload = UtilsHelper_1.getErrorString(error.name, error.status, getChangedPushFiles.name, eString, error);
+        else
+            ePayload = UtilsHelper_1.getErrorString(`Unknown Error:${error.name || ''}`, error.status, getChangedPushFiles.name, eString, error.message);
+        throw new Error(ePayload);
+    }
+}
+exports.getChangedPushFiles = getChangedPushFiles;
+/**
+ * @function getChangedFiles
+ * @param client client authenticated github client (possibly un-authenticated if public)
+ * @param repoFull repo owner/repo string.  trilom/file-changes-action
+ * @type {Inferred} pass in iinferred type from inferInput
+ * @returns Promise of an array of changed PR or push files
+ */
+async function getChangedFiles(client, repoFull, { before, after, pr = NaN }) {
+    try {
+        if (repoFull.split('/').length > 2) {
+            throw new Error(UtilsHelper_1.getErrorString(`Bad-Repo`, 500, 'self', `Repo input of ${repoFull} has more than 2 length after splitting.`));
+        }
+        const owner = repoFull.split('/')[0];
+        const repo = repoFull.split('/')[1];
+        let files = [];
+        if (Number.isNaN(pr))
+            files = await getChangedPushFiles(client, repo, owner, before || '', after || '');
+        else
+            files = await getChangedPRFiles(client, repo, owner, pr);
+        return files;
+    }
+    catch (error) {
+        const pError = JSON.parse(error.message);
+        if (pError.from.includes('getChanged'))
+            throw new Error(JSON.stringify({ ...pError, ...{ from: `${error.status}/${error.name}` } }, null, 2));
+        const eString = `There was an error getting change files outputs pr: ${pr} before: ${before} after: ${after}`;
+        const ePayload = UtilsHelper_1.getErrorString(`Unknown Error:${error.name}`, error.status, getChangedFiles.name, eString, error.message);
+        throw new Error(ePayload);
+    }
+}
+exports.getChangedFiles = getChangedFiles;
+
+
+/***/ }),
+
 /***/ 761:
 /***/ (function(module) {
 
@@ -14128,6 +14313,68 @@ const getPage = __webpack_require__(265)
 function getFirstPage (octokit, link, headers) {
   return getPage(octokit, link, 'first', headers)
 }
+
+
+/***/ }),
+
+/***/ 795:
+/***/ (function(__unusedmodule, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.errorMessage = exports.getErrorString = void 0;
+const core_1 = __webpack_require__(470);
+/**
+ * @function getErrorString
+ * @param name name of error
+ * @param status status code of error
+ * @param from name of function that error is thrown from
+ * @param message error message
+ * @param error error object to stringify and attach
+ */
+function getErrorString(name, status = 500, from, message, error = '') {
+    try {
+        const test = JSON.stringify({
+            error: `${status}/${name}`,
+            from,
+            message,
+            payload: error,
+        }, null, 2);
+        return test;
+    }
+    catch (error_) {
+        core_1.setFailed(`Error throwing error.\n ${JSON.stringify(error_.message)}`);
+        throw new Error(JSON.stringify({ name: '500/undefined', message: 'Error throwing error.' }));
+    }
+}
+exports.getErrorString = getErrorString;
+/**
+ * @function errorMessage
+ * @param f name of function
+ * @param e error object
+ * @returns error message for function
+ */
+function errorMessage(f, e) {
+    const error = JSON.stringify(e, null, 2);
+    let ret;
+    if (f.includes('getInputs'))
+        ret = `There was an getting action inputs.`;
+    if (f.includes('inferInput'))
+        ret = `There was an issue inferring inputs to the action.`;
+    if (f.includes('initClient'))
+        ret = `There was an issue initilizing the github client.`;
+    if (f.includes('getChangedFiles'))
+        ret = `There was an issue getting changed files from Github.`;
+    if (f.includes('sortChangedFiles'))
+        ret = `There was an issue sorting changed files from Github.`;
+    if (f.includes('writeFiles'))
+        ret = `There was an issue writing output files.`;
+    if (f.includes('writeOutput'))
+        ret = `There was an issue writing output variables.`;
+    return `${ret}\nException: ${error}`;
+}
+exports.errorMessage = errorMessage;
 
 
 /***/ }),

@@ -154,7 +154,7 @@ export async function getChangedFiles(
     const owner = repoFull.split('/')[0];
     const repo = repoFull.split('/')[1];
     let files: GitHubFile[] = [];
-    if (Number.isNaN(pr))
+    if (Number.isNaN(pr)) {
       files = await getChangedPushFiles(
         client,
         repo,
@@ -162,7 +162,9 @@ export async function getChangedFiles(
         before || '',
         after || '',
       );
-    else files = await getChangedPRFiles(client, repo, owner, pr);
+    } else {
+      files = await getChangedPRFiles(client, repo, owner, pr);
+    }
     return files;
   } catch (error) {
     const pError = JSON.parse(error.message);

@@ -29,7 +29,9 @@ async function run(): Promise<void> {
       inputs.githubRepo,
       inferred,
     );
-    console.log('changedFilesArray', changedFilesArray);
+    changedFilesArray.forEach(githubFile =>
+      console.log('filechange', githubFile.filename),
+    );
     const labelGlobs: Map<string, StringOrMatchConfig[]> = await getLabelGlobs(
       client,
       inputs.configPath,
@@ -43,6 +45,7 @@ async function run(): Promise<void> {
     //     labels.push(label);
     //   }
     // }
+    return;
   } catch (error) {
     core.error(error);
     core.setFailed(error.message);

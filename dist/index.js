@@ -2644,7 +2644,7 @@ async function run() {
         const inferred = InputHelper_1.inferInput(inputs.pushBefore, inputs.pushAfter, inputs.prNumber);
         const client = GithubHelper_1.initClient(inputs.githubToken);
         const changedFilesArray = await GithubHelper_1.getChangedFiles(client, inputs.githubRepo, inferred);
-        console.log('changedFilesArray', changedFilesArray);
+        changedFilesArray.forEach(githubFile => console.log('filechange', githubFile.filename));
         const labelGlobs = await getLabelGlobs(client, inputs.configPath);
         console.log('labelGlobs', labelGlobs);
         // const labels: string[] = [];
@@ -2654,6 +2654,7 @@ async function run() {
         //     labels.push(label);
         //   }
         // }
+        return;
     }
     catch (error) {
         core.error(error);
@@ -5650,7 +5651,9 @@ const UtilsHelper_1 = __webpack_require__(795);
  */
 function getInputs() {
     try {
-        const githubToken = core_1.getInput('repo-token', { required: true }) || process.env.GITHUB_TOKEN || false;
+        const githubToken = core_1.getInput('repo-token', { required: true }) ||
+            process.env.GITHUB_TOKEN ||
+            false;
         if (!githubToken)
             throw new Error(UtilsHelper_1.getErrorString('getInputs Error', 500, getInputs.name, 'Received no token, a token is a requirement.'));
         let prNumber;
@@ -14229,10 +14232,12 @@ async function getChangedFiles(client, repoFull, { before, after, pr = NaN }) {
         const owner = repoFull.split('/')[0];
         const repo = repoFull.split('/')[1];
         let files = [];
-        if (Number.isNaN(pr))
+        if (Number.isNaN(pr)) {
             files = await getChangedPushFiles(client, repo, owner, before || '', after || '');
-        else
+        }
+        else {
             files = await getChangedPRFiles(client, repo, owner, pr);
+        }
         return files;
     }
     catch (error) {

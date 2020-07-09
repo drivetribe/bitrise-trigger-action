@@ -1,8 +1,8 @@
 {
-  "name": "typescript-action",
-  "version": "0.0.0",
+  "name": "bitrise-trigger-action",
+  "version": "0.1.0",
   "private": true,
-  "description": "TypeScript template action",
+  "description": "Bitrise tigger Github action",
   "main": "lib/main.js",
   "scripts": {
     "build": "tsc",
@@ -15,31 +15,33 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/actions/typescript-action.git"
+    "url": "git+https://github.com/drivetribe/bitrise-trigger-action.git"
   },
   "keywords": [
     "actions",
-    "node",
-    "setup"
+    "bitrise",
+    "trigger"
   ],
-  "author": "YourNameOrOrganization",
+  "author": "DriveTribe",
   "license": "MIT",
   "dependencies": {
-    "@actions/core": "^1.2.0"
+    "@actions/core": "1.2.4",
+    "@actions/github": "4.0.0",
+    "js-yaml": "3.14.0",
+    "minimatch": "3.0.4"
   },
   "devDependencies": {
-    "@types/jest": "^24.0.23",
-    "@types/node": "^12.7.12",
-    "@typescript-eslint/parser": "^2.8.0",
-    "@zeit/ncc": "^0.20.5",
-    "eslint": "^5.16.0",
-    "eslint-plugin-github": "^2.0.0",
-    "eslint-plugin-jest": "^22.21.0",
-    "jest": "^24.9.0",
-    "jest-circus": "^24.9.0",
-    "js-yaml": "^3.13.1",
-    "prettier": "^1.19.1",
-    "ts-jest": "^24.2.0",
-    "typescript": "^3.6.4"
+    "@types/jest": "24.9.1",
+    "@types/node": "12.7.12",
+    "@typescript-eslint/parser": "2.34.0",
+    "@zeit/ncc": "0.22.3",
+    "eslint": "7.4.0",
+    "eslint-plugin-github": "4.0.1",
+    "eslint-plugin-jest": "23.18.0",
+    "jest": "26.1.0",
+    "jest-circus": "26.1.0",
+    "prettier": "2.0.5",
+    "ts-jest": "26.1.1",
+    "typescript": "3.9.6"
   }
 }

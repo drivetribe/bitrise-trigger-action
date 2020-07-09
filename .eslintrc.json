@@ -1,8 +1,12 @@
 {
     "plugins": ["jest", "@typescript-eslint"],
     "parser": "@typescript-eslint/parser",
+    "extends": [
+      "eslint:recommended",
+      "plugin:@typescript-eslint/recommended"
+    ],
     "parserOptions": {
-      "ecmaVersion": 9,
+      "ecmaVersion": 10,
       "sourceType": "module",
       "project": "./tsconfig.json"
     },

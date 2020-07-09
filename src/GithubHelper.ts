@@ -58,7 +58,7 @@ export async function getChangedPRFiles(
   } catch (error) {
     const eString = `There was an error getting change files for repo:${repo} owner:${owner} pr:${pullNumber}`;
     let ePayload: string;
-    if (error.name === 'HttpError' && +error.status === 404)
+    if (error.name === 'HttpError' && +error.status === 404) {
       ePayload = getErrorString(
         error.name,
         error.status,
@@ -66,7 +66,7 @@ export async function getChangedPRFiles(
         eString,
         error,
       );
-    else
+    } else {
       ePayload = getErrorString(
         `Unknown Error:${error.name || ''}`,
         error.status,
@@ -74,6 +74,7 @@ export async function getChangedPRFiles(
         eString,
         error.message,
       );
+    }
     throw new Error(ePayload);
   }
 }
@@ -109,7 +110,7 @@ export async function getChangedPushFiles(
   } catch (error) {
     const eString = `There was an error getting change files for repo:${repo} owner:${owner} base:${base} head:${head}`;
     let ePayload: string;
-    if (error.name === 'HttpError' && +error.status === 404)
+    if (error.name === 'HttpError' && +error.status === 404) {
       ePayload = getErrorString(
         error.name,
         error.status,
@@ -117,7 +118,7 @@ export async function getChangedPushFiles(
         eString,
         error,
       );
-    else
+    } else {
       ePayload = getErrorString(
         `Unknown Error:${error.name || ''}`,
         error.status,
@@ -125,6 +126,7 @@ export async function getChangedPushFiles(
         eString,
         error.message,
       );
+    }
     throw new Error(ePayload);
   }
 }
@@ -168,7 +170,7 @@ export async function getChangedFiles(
     return files;
   } catch (error) {
     const pError = JSON.parse(error.message);
-    if (pError.from.includes('getChanged'))
+    if (pError.from.includes('getChanged')) {
       throw new Error(
         JSON.stringify(
           {...pError, ...{from: `${error.status}/${error.name}`}},
@@ -176,6 +178,7 @@ export async function getChangedFiles(
           2,
         ),
       );
+    }
     const eString = `There was an error getting change files outputs pr: ${pr} before: ${before} after: ${after}`;
     const ePayload: string = getErrorString(
       `Unknown Error:${error.name}`,

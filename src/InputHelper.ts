@@ -24,7 +24,7 @@ export function getInputs(): Inputs {
       coreGetInput('repo-token', {required: true}) ||
       process.env.GITHUB_TOKEN ||
       false;
-    if (!githubToken)
+    if (!githubToken) {
       throw new Error(
         getErrorString(
           'getInputs Error',
@@ -33,6 +33,7 @@ export function getInputs(): Inputs {
           'Received no token, a token is a requirement.',
         ),
       );
+    }
     let prNumber;
     if (typeof context.issue.number !== 'undefined') {
       if (

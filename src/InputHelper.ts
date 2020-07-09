@@ -21,7 +21,9 @@ export interface Inputs {
 export function getInputs(): Inputs {
   try {
     const githubToken =
-      coreGetInput('repo-token') || process.env.GITHUB_TOKEN || false;
+      coreGetInput('repo-token', {required: true}) ||
+      process.env.GITHUB_TOKEN ||
+      false;
     if (!githubToken)
       throw new Error(
         getErrorString(

@@ -26,27 +26,31 @@ async function run(): Promise<void> {
 
     console.log('inputs', inputs);
     console.log('inferred', inferred);
-    const changedFilesArray = await getChangedFiles(
+    const changedFiles = await getChangedFiles(
       client,
       inputs.githubRepo,
       inferred,
     );
-    changedFilesArray.forEach(githubFile =>
-      console.log('filechange', githubFile.filename),
+    const changedFilesArray = changedFiles.map(
+      githubFile => githubFile.filename,
     );
-    const labelGlobs: Map<string, StringOrMatchConfig[]> = await getLabelGlobs(
-      client,
-      inputs.configPath,
-    );
-    console.log('labelGlobs', labelGlobs);
+    console.log('changedFilesArray', changedFilesArray);
 
-    // const labels: string[] = [];
-    // for (const [label, globs] of labelGlobs.entries()) {
-    //   core.debug(`processing ${label}`);
-    //   if (checkGlobs(changedFilesArray, globs)) {
-    //     labels.push(label);
-    //   }
-    // }
+    const triggerGlobs: Map<
+      string,
+      StringOrMatchConfig[]
+    > = await getTriggerGlobs(client, inputs.configPath);
+    console.log('triggerGlobs', triggerGlobs);
+
+    const workflowsToTrigger: string[] = [];
+    for (const [workflow, globs] of triggerGlobs.entries()) {
+      core.debug(`processing ${workflow}`);
+      if (checkGlobs(changedFilesArray, globs)) {
+        workflowsToTrigger.push(workflow);
+      }
+    }
+
+    console.log('workflowsToTrigger', workflowsToTrigger);
     return;
   } catch (error) {
     core.error(error);
@@ -54,7 +58,7 @@ async function run(): Promise<void> {
   }
 }
 
-async function getLabelGlobs(
+async function getTriggerGlobs(
   client: github.GitHub,
   configurationPath: string,
 ): Promise<Map<string, StringOrMatchConfig[]>> {
@@ -63,11 +67,11 @@ async function getLabelGlobs(
     configurationPath,
   );
 
-  // loads (hopefully) a `{[label:string]: string | StringOrMatchConfig[]}`, but is `any`:
+  // loads (hopefully) a `{[workflow:string]: string | StringOrMatchConfig[]}`, but is `any`:
   const configObject: any = yaml.safeLoad(configurationContent);
 
   // transform `any` => `Map<string,StringOrMatchConfig[]>` or throw if yaml is malformed:
-  return getLabelGlobMapFromObject(configObject);
+  return getWorkflowGlobMapFromObject(configObject);
 }
 
 async function fetchContent(
@@ -85,23 +89,23 @@ async function fetchContent(
   return Buffer.from(response.data.content, response.data.encoding).toString();
 }
 
-function getLabelGlobMapFromObject(
+function getWorkflowGlobMapFromObject(
   configObject: any,
 ): Map<string, StringOrMatchConfig[]> {
-  const labelGlobs: Map<string, StringOrMatchConfig[]> = new Map();
-  for (const label in configObject) {
-    if (typeof configObject[label] === 'string') {
-      labelGlobs.set(label, [configObject[label]]);
-    } else if (configObject[label] instanceof Array) {
-      labelGlobs.set(label, configObject[label]);
+  const workflowGlobs: Map<string, StringOrMatchConfig[]> = new Map();
+  for (const workflow in configObject) {
+    if (typeof configObject[workflow] === 'string') {
+      workflowGlobs.set(workflow, [configObject[workflow]]);
+    } else if (configObject[workflow] instanceof Array) {
+      workflowGlobs.set(workflow, configObject[workflow]);
     } else {
       throw Error(
-        `found unexpected type for label ${label} (should be string or array of globs)`,
+        `found unexpected type for workflow ${workflow} (should be string or array of globs)`,
       );
     }
   }
 
-  return labelGlobs;
+  return workflowGlobs;
 }
 
 function toMatchConfig(config: StringOrMatchConfig): MatchConfig {

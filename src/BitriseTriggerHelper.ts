@@ -44,7 +44,6 @@ async function getBitriseApps(inputs: Inputs): Promise<any> {
   );
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function triggerBuild(appSlug: string, inputs: Inputs): Promise<any> {
   console.log('triggerBuild', inputs.event, inputs.prNumber);
   return await http
@@ -74,8 +73,8 @@ async function triggerBuild(appSlug: string, inputs: Inputs): Promise<any> {
 
 function getSlugFromAppTitle(
   appTitle: string,
-  apps: {slug: string; title: string}[],
+  apps: {data: {slug: string; title: string}[]} | null,
 ): string | null {
-  const appObj = apps.find(app => app.title === appTitle);
-  return appObj ? appObj.slug : null;
+  const appObj = apps?.data.find(app => app.title === appTitle);
+  return appObj?.slug || null;
 }

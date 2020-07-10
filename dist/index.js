@@ -1103,7 +1103,6 @@ async function getBitriseApps(inputs) {
         return JSON.parse(body);
     });
 }
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function triggerBuild(appSlug, inputs) {
     console.log('triggerBuild', inputs.event, inputs.prNumber);
     return await http
@@ -1123,8 +1122,8 @@ async function triggerBuild(appSlug, inputs) {
     });
 }
 function getSlugFromAppTitle(appTitle, apps) {
-    const appObj = apps.find(app => app.title === appTitle);
-    return appObj ? appObj.slug : null;
+    const appObj = apps === null || apps === void 0 ? void 0 : apps.data.find(app => app.title === appTitle);
+    return (appObj === null || appObj === void 0 ? void 0 : appObj.slug) || null;
 }
 
 

@@ -2671,6 +2671,7 @@ async function getLabelGlobs(client, configurationPath) {
     return getLabelGlobMapFromObject(configObject);
 }
 async function fetchContent(client, repoPath) {
+    console.log('fetch content', github.context.sha);
     const response = await client.repos.getContents({
         owner: github.context.repo.owner,
         repo: github.context.repo.repo,

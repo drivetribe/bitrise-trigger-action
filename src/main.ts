@@ -128,7 +128,7 @@ function checkGlobs(
   globs: StringOrMatchConfig[],
 ): boolean {
   for (const glob of globs) {
-    core.debug(` checking pattern ${JSON.stringify(glob)}`);
+    core.debug(`checking pattern ${JSON.stringify(glob)}`);
     const matchConfig = toMatchConfig(glob);
     if (checkMatch(changedFiles, matchConfig)) {
       return true;

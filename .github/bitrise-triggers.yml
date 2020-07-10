@@ -1,2 +1,2 @@
 all:
-  - src/**/*.js
+  - src/**/*.ts

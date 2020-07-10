@@ -1046,6 +1046,85 @@ module.exports = new Type('tag:yaml.org,2002:set', {
 
 /***/ }),
 
+/***/ 106:
+/***/ (function(__unusedmodule, exports, __webpack_require__) {
+
+"use strict";
+
+/**
+ * https://devcenter.bitrise.io/api/api-index/
+ * https://api-docs.bitrise.io/
+ */
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.triggerWorkflows = void 0;
+const httpm = __importStar(__webpack_require__(539));
+const http = new httpm.HttpClient('bitrise-trigger-action');
+const BASE_URL = 'https://api.bitrise.io/v0.1';
+async function triggerWorkflows(workflows, inputs) {
+    const apps = await getBitriseApps(inputs);
+    console.log('bitrise apps', apps);
+    // const results: number[] = [];
+    // workflows.forEach(() => {
+    //   await triggerBuild('', inputs).then(res =>
+    //     results.push(res.message.statusCode),
+    //   );
+    // });
+    // results.length > 0 ? results.includes(code => code !== 200) : false,
+    return Promise.resolve(false);
+}
+exports.triggerWorkflows = triggerWorkflows;
+async function getBitriseApps(inputs) {
+    const url = inputs.orgSlug
+        ? `${BASE_URL}/organizations/${inputs.orgSlug}/apps`
+        : `${BASE_URL}/apps`;
+    return http.get(url, { Authorization: inputs.bitriseToken }).then(async (res) => {
+        const body = await res.readBody();
+        return JSON.parse(body);
+    });
+}
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+async function triggerBuild(appSlug, inputs) {
+    console.log('triggerBuild', inputs.event, inputs.prNumber);
+    return await http
+        .postJson(`${BASE_URL}/apps/${appSlug}/builds`, {
+        payload: {
+            hook_info: {
+                type: 'bitrise',
+            },
+            build_params: {
+                commit_hash: inputs.sha,
+                pull_request_id: inputs.prNumber,
+            },
+        },
+    }, { Authorization: inputs.bitriseToken })
+        .then(async (res) => {
+        const body = await res.readBody();
+        return JSON.parse(body);
+    });
+}
+
+
+/***/ }),
+
 /***/ 118:
 /***/ (function(module, __unusedexports, __webpack_require__) {
 
@@ -2635,6 +2714,7 @@ const core = __importStar(__webpack_require__(470));
 const InputHelper_1 = __webpack_require__(384);
 const GithubHelper_1 = __webpack_require__(757);
 const FilesChangedHelper_1 = __webpack_require__(582);
+const BitriseTriggerHelper_1 = __webpack_require__(106);
 async function run() {
     try {
         const inputs = InputHelper_1.getInputs();
@@ -2656,6 +2736,7 @@ async function run() {
             }
         }
         console.log('workflowsToTrigger', workflowsToTrigger);
+        BitriseTriggerHelper_1.triggerWorkflows(workflowsToTrigger, inputs);
         return;
     }
     catch (error) {
@@ -5553,7 +5634,11 @@ function getInputs() {
             process.env.GITHUB_TOKEN ||
             false;
         if (!githubToken) {
-            throw new Error(UtilsHelper_1.getErrorString('getInputs Error', 500, getInputs.name, 'Received no token, a token is a requirement.'));
+            throw new Error(UtilsHelper_1.getErrorString('getInputs Error', 500, getInputs.name, 'Received no repo-token, a repo-token is a requirement.'));
+        }
+        const bitriseToken = core_1.getInput('bitrise-token', { required: true }) || '';
+        if (!bitriseToken) {
+            throw new Error(UtilsHelper_1.getErrorString('getInputs Error', 500, getInputs.name, 'Received no bitrise-token, a bitrise-token is a requirement.'));
         }
         let prNumber;
         if (typeof github_1.context.issue.number !== 'undefined') {
@@ -5574,8 +5659,11 @@ function getInputs() {
             pushBefore: github_1.context.payload.before === undefined ? false : github_1.context.payload.before,
             pushAfter: github_1.context.payload.after === undefined ? false : github_1.context.payload.after,
             prNumber,
-            configPath: core_1.getInput('configuration-path', { required: true }),
+            sha: github_1.context.sha,
             event: github_1.context.eventName,
+            configPath: core_1.getInput('configuration-path', { required: true }),
+            bitriseToken,
+            orgSlug: core_1.getInput('bitrise-org-slug') || '',
         };
     }
     catch (error) {

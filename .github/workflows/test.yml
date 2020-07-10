@@ -21,3 +21,5 @@ jobs:
     - uses: ./
       with:
         repo-token: "${{ secrets.GITHUB_TOKEN }}"
+        bitrise-token: "${{ secrets.BITRISE_TOKEN }}"
+        bitrise-org-slug: "${{ secrets.BITRISE_ORG_SLUG }}"

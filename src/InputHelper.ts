@@ -8,8 +8,11 @@ export interface Inputs {
   pushBefore: string;
   pushAfter: string;
   prNumber: number;
-  configPath: string;
+  sha: string;
   event: string;
+  configPath: string;
+  bitriseToken: string;
+  orgSlug: string;
   [key: string]: string | number;
 }
 
@@ -30,7 +33,18 @@ export function getInputs(): Inputs {
           'getInputs Error',
           500,
           getInputs.name,
-          'Received no token, a token is a requirement.',
+          'Received no repo-token, a repo-token is a requirement.',
+        ),
+      );
+    }
+    const bitriseToken = coreGetInput('bitrise-token', {required: true}) || '';
+    if (!bitriseToken) {
+      throw new Error(
+        getErrorString(
+          'getInputs Error',
+          500,
+          getInputs.name,
+          'Received no bitrise-token, a bitrise-token is a requirement.',
         ),
       );
     }
@@ -55,8 +69,11 @@ export function getInputs(): Inputs {
       pushAfter:
         context.payload.after === undefined ? false : context.payload.after,
       prNumber,
-      configPath: coreGetInput('configuration-path', {required: true}),
+      sha: context.sha,
       event: context.eventName,
+      configPath: coreGetInput('configuration-path', {required: true}),
+      bitriseToken,
+      orgSlug: coreGetInput('bitrise-org-slug') || '',
     } as Inputs;
   } catch (error) {
     const eString = `Received an issue getting action inputs.`;

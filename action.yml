@@ -7,6 +7,10 @@ inputs:
   configuration-path:
     description: 'The path for the bitrise trigger configurations'
     default: '.github/bitrise-triggers.yml'
+  bitrise-token:
+    description: 'Authentication token for bitrise api https://devcenter.bitrise.io/api/authentication/'
+  bitrise-org-slug:
+    description: 'Every organization has its own specific URL on Bitrise https://devcenter.bitrise.io/team-management/organizations/org-url/'
 runs:
   using: 'node12'
   main: 'dist/index.js'

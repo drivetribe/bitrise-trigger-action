@@ -6,6 +6,7 @@ import {
   checkGlobs,
   StringOrMatchConfig,
 } from './FilesChangedHelper';
+import {triggerWorkflows} from './BitriseTriggerHelper';
 
 async function run(): Promise<void> {
   try {
@@ -46,6 +47,7 @@ async function run(): Promise<void> {
     }
 
     console.log('workflowsToTrigger', workflowsToTrigger);
+    triggerWorkflows(workflowsToTrigger, inputs);
     return;
   } catch (error) {
     core.error(error);

@@ -27,6 +27,7 @@
   "dependencies": {
     "@actions/core": "1.2.4",
     "@actions/github": "2.2.0",
+    "@actions/http-client": "^1.0.8",
     "js-yaml": "3.14.0",
     "minimatch": "3.0.4"
   },

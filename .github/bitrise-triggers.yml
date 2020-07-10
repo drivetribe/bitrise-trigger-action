@@ -1,2 +1,2 @@
-all:
+'DRIVETRIBE - Android':
   - src/**/*.ts

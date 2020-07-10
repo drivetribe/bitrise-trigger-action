@@ -1079,17 +1079,19 @@ exports.triggerWorkflows = void 0;
 const httpm = __importStar(__webpack_require__(539));
 const http = new httpm.HttpClient('bitrise-trigger-action');
 const BASE_URL = 'https://api.bitrise.io/v0.1';
-async function triggerWorkflows(workflows, inputs) {
+async function triggerWorkflows(appNames, inputs) {
     const apps = await getBitriseApps(inputs);
     console.log('bitrise apps', apps);
-    // const results: number[] = [];
-    // workflows.forEach(() => {
-    //   await triggerBuild('', inputs).then(res =>
-    //     results.push(res.message.statusCode),
-    //   );
-    // });
-    // results.length > 0 ? results.includes(code => code !== 200) : false,
-    return Promise.resolve(false);
+    const results = [];
+    for (const appName of appNames) {
+        const appSlug = getSlugFromAppTitle(appName, apps);
+        if (appSlug) {
+            await triggerBuild(appSlug, inputs).then(res => results.push(res.message.statusCode));
+        }
+    }
+    return Promise.resolve(results.length > 0
+        ? results.some((code) => code !== 200)
+        : false);
 }
 exports.triggerWorkflows = triggerWorkflows;
 async function getBitriseApps(inputs) {
@@ -1111,8 +1113,7 @@ async function triggerBuild(appSlug, inputs) {
                 type: 'bitrise',
             },
             build_params: {
-                commit_hash: inputs.sha,
-                pull_request_id: inputs.prNumber,
+                branch: 'master',
             },
         },
     }, { Authorization: inputs.bitriseToken })
@@ -1120,6 +1121,10 @@ async function triggerBuild(appSlug, inputs) {
         const body = await res.readBody();
         return JSON.parse(body);
     });
+}
+function getSlugFromAppTitle(appTitle, apps) {
+    const appObj = apps.find(app => app.title === appTitle);
+    return appObj ? appObj.slug : null;
 }
 
 

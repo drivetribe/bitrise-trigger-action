@@ -2643,6 +2643,8 @@ async function run() {
         // parse input
         const inferred = InputHelper_1.inferInput(inputs.pushBefore, inputs.pushAfter, inputs.prNumber);
         const client = GithubHelper_1.initClient(inputs.githubToken);
+        console.log('inputs', inputs);
+        console.log('inferred', inferred);
         const changedFilesArray = await GithubHelper_1.getChangedFiles(client, inputs.githubRepo, inferred);
         changedFilesArray.forEach(githubFile => console.log('filechange', githubFile.filename));
         const labelGlobs = await getLabelGlobs(client, inputs.configPath);
@@ -5654,8 +5656,9 @@ function getInputs() {
         const githubToken = core_1.getInput('repo-token', { required: true }) ||
             process.env.GITHUB_TOKEN ||
             false;
-        if (!githubToken)
+        if (!githubToken) {
             throw new Error(UtilsHelper_1.getErrorString('getInputs Error', 500, getInputs.name, 'Received no token, a token is a requirement.'));
+        }
         let prNumber;
         if (typeof github_1.context.issue.number !== 'undefined') {
             if (+core_1.getInput('prNumber') !== github_1.context.issue.number &&
@@ -14177,10 +14180,12 @@ async function getChangedPRFiles(client, repo, owner, pullNumber) {
     catch (error) {
         const eString = `There was an error getting change files for repo:${repo} owner:${owner} pr:${pullNumber}`;
         let ePayload;
-        if (error.name === 'HttpError' && +error.status === 404)
+        if (error.name === 'HttpError' && +error.status === 404) {
             ePayload = UtilsHelper_1.getErrorString(error.name, error.status, getChangedPRFiles.name, eString, error);
-        else
+        }
+        else {
             ePayload = UtilsHelper_1.getErrorString(`Unknown Error:${error.name || ''}`, error.status, getChangedPRFiles.name, eString, error.message);
+        }
         throw new Error(ePayload);
     }
 }
@@ -14209,10 +14214,12 @@ async function getChangedPushFiles(client, repo, owner, base, head) {
     catch (error) {
         const eString = `There was an error getting change files for repo:${repo} owner:${owner} base:${base} head:${head}`;
         let ePayload;
-        if (error.name === 'HttpError' && +error.status === 404)
+        if (error.name === 'HttpError' && +error.status === 404) {
             ePayload = UtilsHelper_1.getErrorString(error.name, error.status, getChangedPushFiles.name, eString, error);
-        else
+        }
+        else {
             ePayload = UtilsHelper_1.getErrorString(`Unknown Error:${error.name || ''}`, error.status, getChangedPushFiles.name, eString, error.message);
+        }
         throw new Error(ePayload);
     }
 }
@@ -14236,14 +14243,16 @@ async function getChangedFiles(client, repoFull, { before, after, pr = NaN }) {
             files = await getChangedPushFiles(client, repo, owner, before || '', after || '');
         }
         else {
+            console.log('getChangedPRFiles pr', pr);
             files = await getChangedPRFiles(client, repo, owner, pr);
         }
         return files;
     }
     catch (error) {
         const pError = JSON.parse(error.message);
-        if (pError.from.includes('getChanged'))
+        if (pError.from.includes('getChanged')) {
             throw new Error(JSON.stringify({ ...pError, ...{ from: `${error.status}/${error.name}` } }, null, 2));
+        }
         const eString = `There was an error getting change files outputs pr: ${pr} before: ${before} after: ${after}`;
         const ePayload = UtilsHelper_1.getErrorString(`Unknown Error:${error.name}`, error.status, getChangedFiles.name, eString, error.message);
         throw new Error(ePayload);

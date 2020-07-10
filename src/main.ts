@@ -23,9 +23,9 @@ async function run(): Promise<void> {
     );
 
     const client = initClient(inputs.githubToken);
-    
-    console.log('inputs', inputs)
-    console.log('inferred', inferred)
+
+    console.log('inputs', inputs);
+    console.log('inferred', inferred);
     const changedFilesArray = await getChangedFiles(
       client,
       inputs.githubRepo,

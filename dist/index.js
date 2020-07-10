@@ -2632,11 +2632,9 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const core = __importStar(__webpack_require__(470));
-const github = __importStar(__webpack_require__(469));
 const InputHelper_1 = __webpack_require__(384);
 const GithubHelper_1 = __webpack_require__(757);
-const yaml = __importStar(__webpack_require__(414));
-const minimatch_1 = __webpack_require__(595);
+const FilesChangedHelper_1 = __webpack_require__(582);
 async function run() {
     try {
         const inputs = InputHelper_1.getInputs();
@@ -2648,12 +2646,12 @@ async function run() {
         const changedFiles = await GithubHelper_1.getChangedFiles(client, inputs.githubRepo, inferred);
         const changedFilesArray = changedFiles.map(githubFile => githubFile.filename);
         console.log('changedFilesArray', changedFilesArray);
-        const triggerGlobs = await getTriggerGlobs(client, inputs.configPath);
-        console.log('triggerGlobs', triggerGlobs);
+        const workflowGlobs = await FilesChangedHelper_1.getWorkflowGlobs(client, inputs.configPath);
+        console.log('workflowGlobs', workflowGlobs);
         const workflowsToTrigger = [];
-        for (const [workflow, globs] of triggerGlobs.entries()) {
+        for (const [workflow, globs] of workflowGlobs.entries()) {
             core.debug(`processing ${workflow}`);
-            if (checkGlobs(changedFilesArray, globs)) {
+            if (FilesChangedHelper_1.checkGlobs(changedFilesArray, globs)) {
                 workflowsToTrigger.push(workflow);
             }
         }
@@ -2664,111 +2662,6 @@ async function run() {
         core.error(error);
         core.setFailed(error.message);
     }
-}
-async function getTriggerGlobs(client, configurationPath) {
-    const configurationContent = await fetchContent(client, configurationPath);
-    // loads (hopefully) a `{[workflow:string]: string | StringOrMatchConfig[]}`, but is `any`:
-    const configObject = yaml.safeLoad(configurationContent);
-    // transform `any` => `Map<string,StringOrMatchConfig[]>` or throw if yaml is malformed:
-    return getWorkflowGlobMapFromObject(configObject);
-}
-async function fetchContent(client, repoPath) {
-    console.log('fetch content', github.context.sha);
-    const response = await client.repos.getContents({
-        owner: github.context.repo.owner,
-        repo: github.context.repo.repo,
-        path: repoPath,
-        ref: github.context.sha,
-    });
-    return Buffer.from(response.data.content, response.data.encoding).toString();
-}
-function getWorkflowGlobMapFromObject(configObject) {
-    const workflowGlobs = new Map();
-    for (const workflow in configObject) {
-        if (typeof configObject[workflow] === 'string') {
-            workflowGlobs.set(workflow, [configObject[workflow]]);
-        }
-        else if (configObject[workflow] instanceof Array) {
-            workflowGlobs.set(workflow, configObject[workflow]);
-        }
-        else {
-            throw Error(`found unexpected type for workflow ${workflow} (should be string or array of globs)`);
-        }
-    }
-    return workflowGlobs;
-}
-function toMatchConfig(config) {
-    if (typeof config === 'string') {
-        return {
-            any: [config],
-        };
-    }
-    return config;
-}
-function printPattern(matcher) {
-    return (matcher.negate ? '!' : '') + matcher.pattern;
-}
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function checkGlobs(changedFiles, globs) {
-    for (const glob of globs) {
-        core.debug(` checking pattern ${JSON.stringify(glob)}`);
-        const matchConfig = toMatchConfig(glob);
-        if (checkMatch(changedFiles, matchConfig)) {
-            return true;
-        }
-    }
-    return false;
-}
-function isMatch(changedFile, matchers) {
-    core.debug(`    matching patterns against file ${changedFile}`);
-    for (const matcher of matchers) {
-        core.debug(`   - ${printPattern(matcher)}`);
-        if (!matcher.match(changedFile)) {
-            core.debug(`   ${printPattern(matcher)} did not match`);
-            return false;
-        }
-    }
-    core.debug(`   all patterns matched`);
-    return true;
-}
-// equivalent to "Array.some()" but expanded for debugging and clarity
-function checkAny(changedFiles, globs) {
-    const matchers = globs.map(g => new minimatch_1.Minimatch(g));
-    core.debug(`  checking "any" patterns`);
-    for (const changedFile of changedFiles) {
-        if (isMatch(changedFile, matchers)) {
-            core.debug(`  "any" patterns matched against ${changedFile}`);
-            return true;
-        }
-    }
-    core.debug(`  "any" patterns did not match any files`);
-    return false;
-}
-// equivalent to "Array.every()" but expanded for debugging and clarity
-function checkAll(changedFiles, globs) {
-    const matchers = globs.map(g => new minimatch_1.Minimatch(g));
-    core.debug(` checking "all" patterns`);
-    for (const changedFile of changedFiles) {
-        if (!isMatch(changedFile, matchers)) {
-            core.debug(`  "all" patterns did not match against ${changedFile}`);
-            return false;
-        }
-    }
-    core.debug(`  "all" patterns matched all files`);
-    return true;
-}
-function checkMatch(changedFiles, matchConfig) {
-    if (matchConfig.all !== undefined) {
-        if (!checkAll(changedFiles, matchConfig.all)) {
-            return false;
-        }
-    }
-    if (matchConfig.any !== undefined) {
-        if (!checkAny(changedFiles, matchConfig.any)) {
-            return false;
-        }
-    }
-    return true;
 }
 run();
 
@@ -11538,6 +11431,146 @@ module.exports = new Schema({
     __webpack_require__(988)
   ]
 });
+
+
+/***/ }),
+
+/***/ 582:
+/***/ (function(__unusedmodule, exports, __webpack_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.checkGlobs = exports.getWorkflowGlobs = void 0;
+const core = __importStar(__webpack_require__(470));
+const github = __importStar(__webpack_require__(469));
+const yaml = __importStar(__webpack_require__(414));
+const minimatch_1 = __webpack_require__(595);
+async function getWorkflowGlobs(client, configurationPath) {
+    const configurationContent = await fetchContent(client, configurationPath);
+    // loads (hopefully) a `{[workflow:string]: string | StringOrMatchConfig[]}`, but is `any`:
+    const configObject = yaml.safeLoad(configurationContent);
+    // transform `any` => `Map<string,StringOrMatchConfig[]>` or throw if yaml is malformed:
+    return getWorkflowGlobMapFromObject(configObject);
+}
+exports.getWorkflowGlobs = getWorkflowGlobs;
+async function fetchContent(client, repoPath) {
+    console.log('fetch content', github.context.sha);
+    const response = await client.repos.getContents({
+        owner: github.context.repo.owner,
+        repo: github.context.repo.repo,
+        path: repoPath,
+        ref: github.context.sha,
+    });
+    return Buffer.from(response.data.content, response.data.encoding).toString();
+}
+function getWorkflowGlobMapFromObject(configObject) {
+    const workflowGlobs = new Map();
+    for (const workflow in configObject) {
+        if (typeof configObject[workflow] === 'string') {
+            workflowGlobs.set(workflow, [configObject[workflow]]);
+        }
+        else if (configObject[workflow] instanceof Array) {
+            workflowGlobs.set(workflow, configObject[workflow]);
+        }
+        else {
+            throw Error(`found unexpected type for workflow ${workflow} (should be string or array of globs)`);
+        }
+    }
+    return workflowGlobs;
+}
+function toMatchConfig(config) {
+    if (typeof config === 'string') {
+        return {
+            any: [config],
+        };
+    }
+    return config;
+}
+function printPattern(matcher) {
+    return (matcher.negate ? '!' : '') + matcher.pattern;
+}
+function checkGlobs(changedFiles, globs) {
+    for (const glob of globs) {
+        core.debug(`checking pattern ${JSON.stringify(glob)}`);
+        const matchConfig = toMatchConfig(glob);
+        if (checkMatch(changedFiles, matchConfig)) {
+            return true;
+        }
+    }
+    return false;
+}
+exports.checkGlobs = checkGlobs;
+function isMatch(changedFile, matchers) {
+    core.debug(`    matching patterns against file ${changedFile}`);
+    for (const matcher of matchers) {
+        core.debug(`   - ${printPattern(matcher)}`);
+        if (!matcher.match(changedFile)) {
+            core.debug(`   ${printPattern(matcher)} did not match`);
+            return false;
+        }
+    }
+    core.debug(`   all patterns matched`);
+    return true;
+}
+// equivalent to "Array.some()" but expanded for debugging and clarity
+function checkAny(changedFiles, globs) {
+    const matchers = globs.map(g => new minimatch_1.Minimatch(g));
+    core.debug(`  checking "any" patterns`);
+    for (const changedFile of changedFiles) {
+        if (isMatch(changedFile, matchers)) {
+            core.debug(`  "any" patterns matched against ${changedFile}`);
+            return true;
+        }
+    }
+    core.debug(`  "any" patterns did not match any files`);
+    return false;
+}
+// equivalent to "Array.every()" but expanded for debugging and clarity
+function checkAll(changedFiles, globs) {
+    const matchers = globs.map(g => new minimatch_1.Minimatch(g));
+    core.debug(` checking "all" patterns`);
+    for (const changedFile of changedFiles) {
+        if (!isMatch(changedFile, matchers)) {
+            core.debug(`  "all" patterns did not match against ${changedFile}`);
+            return false;
+        }
+    }
+    core.debug(`  "all" patterns matched all files`);
+    return true;
+}
+function checkMatch(changedFiles, matchConfig) {
+    if (matchConfig.all !== undefined) {
+        if (!checkAll(changedFiles, matchConfig.all)) {
+            return false;
+        }
+    }
+    if (matchConfig.any !== undefined) {
+        if (!checkAny(changedFiles, matchConfig.any)) {
+            return false;
+        }
+    }
+    return true;
+}
 
 
 /***/ }),

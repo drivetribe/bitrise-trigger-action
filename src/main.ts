@@ -22,6 +22,7 @@ async function run(): Promise<void> {
 
     if (inputs.tag) {
       // TODO: check tag regex
+      console.log(`Skipping tag: ${inputs.tag} - not implemented yet`);
       return;
     }
 

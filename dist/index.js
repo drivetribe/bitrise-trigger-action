@@ -2764,6 +2764,7 @@ async function run() {
         const client = GithubHelper_1.initClient(inputs.githubToken);
         if (inputs.tag) {
             // TODO: check tag regex
+            console.log('Skipping tag not implemented yet');
             return;
         }
         const changedFiles = await GithubHelper_1.getChangedFiles(client, inputs.githubRepo, inferred);

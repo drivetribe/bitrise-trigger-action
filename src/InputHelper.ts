@@ -1,5 +1,6 @@
 import {warning as coreWarning, getInput as coreGetInput} from '@actions/core';
-import {context} from '@actions/github';
+import {GitHub, context} from '@actions/github';
+import {Context} from '@actions/github/lib/context';
 import {getErrorString} from './UtilsHelper';
 
 export interface Inputs {
@@ -8,16 +9,14 @@ export interface Inputs {
   pushBefore: string;
   pushAfter: string;
   prNumber: number;
-  sha: string;
+  context: Context;
   event: string;
   tag: string;
-  ref: string;
   configPath: string;
   configPathPr: string;
   configPathTag: string;
   bitriseToken: string;
   orgSlug: string;
-  [key: string]: string | number;
 }
 
 /**
@@ -71,7 +70,7 @@ export function getInputs(): Inputs {
     if (ref && ref.startsWith(tagPath)) {
       tag = ref.replace(tagPath, '');
     }
-    console.log('context', context, context.payload);
+    console.log('GitHub', GitHub);
     return {
       githubRepo: `${context.repo.owner}/${context.repo.repo}`,
       githubToken,
@@ -80,10 +79,9 @@ export function getInputs(): Inputs {
       pushAfter:
         context.payload.after === undefined ? false : context.payload.after,
       prNumber,
-      sha: context.sha,
       event: context.eventName,
+      context,
       tag,
-      ref,
       configPath: coreGetInput('config-path', {required: true}),
       configPathPr: coreGetInput('config-path-pr'),
       configPathTag: coreGetInput('config-path-tag'),

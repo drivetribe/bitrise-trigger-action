@@ -1082,7 +1082,6 @@ const BASE_URL = 'https://api.bitrise.io/v0.1';
 // TODO: handle errors
 async function triggerWorkflows(appNames, inputs) {
     const apps = await getBitriseApps(inputs);
-    console.log('bitrise apps', apps);
     const results = [];
     for (const appName of appNames) {
         const appSlug = getSlugFromAppTitle(appName, apps);
@@ -1107,24 +1106,52 @@ async function getBitriseApps(inputs) {
 async function triggerBuild(appSlug, inputs) {
     console.log('triggerBuild', inputs.event, inputs.prNumber);
     return await http
-        .postJson(`${BASE_URL}/apps/${appSlug}/builds`, {
-        payload: {
-            hook_info: {
-                type: 'bitrise',
-            },
-            build_params: {
-                commit_hash: inputs.sha,
-                pull_request_id: inputs.prNumber,
-            },
-        },
-    }, { Authorization: inputs.bitriseToken })
+        .postJson(`${BASE_URL}/apps/${appSlug}/builds`, getTriggerBody(inputs), { Authorization: inputs.bitriseToken })
         .then(async (res) => {
+        console.log('trigger responsecode', res.message.statusCode);
         return res.message.statusCode === 200;
     });
 }
 function getSlugFromAppTitle(appTitle, apps) {
     const appObj = apps === null || apps === void 0 ? void 0 : apps.data.find(app => app.title === appTitle);
     return (appObj === null || appObj === void 0 ? void 0 : appObj.slug) || null;
+}
+function getTriggerBody({ context, prNumber }) {
+    var _a, _b, _c, _d, _e, _f, _g, _h;
+    let build_params = {};
+    if (prNumber) {
+        build_params = {
+            commit_hash: context.sha,
+            commit_message: '',
+            // branch: 'feature/platform_subs',
+            // branch_repo_owner: 'drivetribe',
+            // branch_dest: 'master',
+            branch_dest_repo_owner: (_b = (_a = context.payload) === null || _a === void 0 ? void 0 : _a.repository) === null || _b === void 0 ? void 0 : _b.owner.login,
+            pull_request_id: prNumber,
+            pull_request_repository_url: (_d = (_c = context.payload) === null || _c === void 0 ? void 0 : _c.repository) === null || _d === void 0 ? void 0 : _d.git_url,
+            pull_request_merge_branch: context.ref.replace('refs/', ''),
+            pull_request_head_branch: 'pull/3706/head',
+            pull_request_author: context,
+            diff_url: (_f = (_e = context.payload) === null || _e === void 0 ? void 0 : _e.pull_request) === null || _f === void 0 ? void 0 : _f.diff_url,
+        };
+    }
+    else {
+        build_params = {
+            commit_hash: context.sha,
+            commit_message: '',
+            // branch: 'feature/platform_subs',
+            branch_repo_owner: (_h = (_g = context.payload) === null || _g === void 0 ? void 0 : _g.repository) === null || _h === void 0 ? void 0 : _h.owner.login,
+        };
+    }
+    console.log('build_params', build_params);
+    return {
+        payload: {
+            hook_info: {
+                type: 'bitrise',
+            },
+            build_params,
+        },
+    };
 }
 
 
@@ -5669,17 +5696,16 @@ function getInputs() {
         if (ref && ref.startsWith(tagPath)) {
             tag = ref.replace(tagPath, '');
         }
-        console.log('context', github_1.context, github_1.context.payload);
+        console.log('GitHub', github_1.GitHub);
         return {
             githubRepo: `${github_1.context.repo.owner}/${github_1.context.repo.repo}`,
             githubToken,
             pushBefore: github_1.context.payload.before === undefined ? false : github_1.context.payload.before,
             pushAfter: github_1.context.payload.after === undefined ? false : github_1.context.payload.after,
             prNumber,
-            sha: github_1.context.sha,
             event: github_1.context.eventName,
+            context: github_1.context,
             tag,
-            ref,
             configPath: core_1.getInput('config-path', { required: true }),
             configPathPr: core_1.getInput('config-path-pr'),
             configPathTag: core_1.getInput('config-path-tag'),

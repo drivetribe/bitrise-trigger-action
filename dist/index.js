@@ -1093,7 +1093,15 @@ async function triggerWorkflows(appNames, inputs) {
         // TODO: add comment with build urls if PR
         console.log('buildUrls', buildUrls);
     }
-    return Promise.resolve(buildUrls.length === appNames.length);
+    if (buildUrls.length === appNames.length) {
+        return Promise.resolve(true);
+    }
+    else {
+        console.log('buildUrls', buildUrls);
+        console.log('appNames', appNames);
+        console.warn('All builds did not start correctly');
+        return Promise.reject(new Error('All builds did not start correctly'));
+    }
 }
 exports.triggerWorkflows = triggerWorkflows;
 async function getBitriseApps(inputs) {
@@ -2778,7 +2786,12 @@ async function run() {
                 workflowsToTrigger.push(workflow);
             }
         }
-        BitriseTriggerHelper_1.triggerWorkflows(workflowsToTrigger, inputs);
+        if (workflowsToTrigger.length) {
+            BitriseTriggerHelper_1.triggerWorkflows(workflowsToTrigger, inputs);
+        }
+        else {
+            console.log('No changes detected, build skipped');
+        }
         return;
     }
     catch (error) {

@@ -31,7 +31,14 @@ export async function triggerWorkflows(
     console.log('buildUrls', buildUrls);
   }
 
-  return Promise.resolve(buildUrls.length === appNames.length);
+  if (buildUrls.length === appNames.length) {
+    return Promise.resolve(true);
+  } else {
+    console.log('buildUrls', buildUrls);
+    console.log('appNames', appNames);
+    console.warn('All builds did not start correctly');
+    return Promise.reject(new Error('All builds did not start correctly'));
+  }
 }
 
 async function getBitriseApps(inputs: Inputs): Promise<any> {

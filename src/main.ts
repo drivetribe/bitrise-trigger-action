@@ -49,7 +49,11 @@ async function run(): Promise<void> {
       }
     }
 
-    triggerWorkflows(workflowsToTrigger, inputs);
+    if (workflowsToTrigger.length) {
+      triggerWorkflows(workflowsToTrigger, inputs);
+    } else {
+      console.log('No changes detected, build skipped');
+    }
     return;
   } catch (error) {
     core.error(error);

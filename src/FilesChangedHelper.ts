@@ -27,7 +27,6 @@ async function fetchContent(
   client: github.GitHub,
   repoPath: string,
 ): Promise<string> {
-  console.log('fetch content', github.context.sha);
   const response: any = await client.repos.getContents({
     owner: github.context.repo.owner,
     repo: github.context.repo.repo,

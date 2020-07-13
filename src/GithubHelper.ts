@@ -165,7 +165,6 @@ export async function getChangedFiles(
         after || '',
       );
     } else {
-      console.log('getChangedPRFiles pr', pr);
       files = await getChangedPRFiles(client, repo, owner, pr);
     }
     return files;

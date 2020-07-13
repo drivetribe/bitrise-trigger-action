@@ -5734,15 +5734,11 @@ exports.getInputs = getInputs;
  */
 function inferInput(before, after, pr) {
     const event = github_1.context.eventName;
-    const weirdInput = `Received event from ${event}, but also received a before(${before}) or after(${after}) value.\n I am assuming you want to use a Push event but forgot something, so I'm giving you a message.`;
-    const allInput = `Received event from ${event}, but received a before(${before}), after(${after}), and PR(${pr}).\n I am assuming you want to use one or the other but I am giving you Push.`;
     if (event === 'pull_request') {
         if (before &&
             after &&
             (before !== github_1.context.payload.before || after !== github_1.context.payload.after))
             return { before, after }; // PR(push) - pull_request event with push inputs | PUSH
-        if (before || after)
-            core_1.warning(weirdInput); // PR(push) - pull_request event with single push input | PR*
         return { pr }; // PR - pull_request event with no push inputs | PR
     }
     if (event === 'push') {
@@ -5752,13 +5748,10 @@ function inferInput(before, after, pr) {
     }
     if (pr) {
         if (before && after) {
-            core_1.warning(allInput); // Not PR or Push - all inputs | PUSH*
             if (event === 'issue_comment')
                 return { before, after }; // If you explicitly set a before/after in an issue comment it will return those
             return { pr }; // Not PR or Push - pr inputs | PR if a PR before and after assume its a synchronize and return the whole PR
         }
-        if (before || after)
-            core_1.warning(weirdInput); // Not PR or Push - pull_request event with single push input | PR*
         return { pr }; // Not PR or Push - pr inputs | PR
     }
     if (before || after) {
@@ -11612,7 +11605,6 @@ async function getWorkflowGlobs(client, configPath) {
 }
 exports.getWorkflowGlobs = getWorkflowGlobs;
 async function fetchContent(client, repoPath) {
-    console.log('fetch content', github.context.sha);
     const response = await client.repos.getContents({
         owner: github.context.repo.owner,
         repo: github.context.repo.repo,
@@ -14417,7 +14409,6 @@ async function getChangedFiles(client, repoFull, { before, after, pr = NaN }) {
             files = await getChangedPushFiles(client, repo, owner, before || '', after || '');
         }
         else {
-            console.log('getChangedPRFiles pr', pr);
             files = await getChangedPRFiles(client, repo, owner, pr);
         }
         return files;

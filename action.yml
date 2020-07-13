@@ -4,9 +4,15 @@ author: 'DriveTribe'
 inputs: 
   repo-token:
     description: 'The GITHUB_TOKEN secret'
-  configuration-path:
-    description: 'The path for the bitrise trigger configurations'
+  config-path:
+    description: 'The path for the bitrise trigger branch config'
     default: '.github/bitrise-triggers.yml'
+  config-path-pr:
+    description: 'The path for the bitrise trigger PR config'
+    default: '.github/bitrise-triggers-pr.yml'
+  config-path-tag:
+    description: 'The path for the bitrise trigger tag config'
+    default: '.github/bitrise-triggers-tag.yml'
   bitrise-token:
     description: 'Authentication token for bitrise api https://devcenter.bitrise.io/api/authentication/'
   bitrise-org-slug:

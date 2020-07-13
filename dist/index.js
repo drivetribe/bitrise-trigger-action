@@ -1119,8 +1119,7 @@ async function triggerBuild(appSlug, inputs) {
         },
     }, { Authorization: inputs.bitriseToken })
         .then(async (res) => {
-        const body = await res.readBody();
-        return JSON.parse(body);
+        return res.message.statusCode === 200;
     });
 }
 function getSlugFromAppTitle(appTitle, apps) {
@@ -2729,10 +2728,15 @@ async function run() {
         const client = GithubHelper_1.initClient(inputs.githubToken);
         console.log('inputs', inputs);
         console.log('inferred', inferred);
+        if (inputs.tag) {
+            // TODO: check tag regex
+            return;
+        }
         const changedFiles = await GithubHelper_1.getChangedFiles(client, inputs.githubRepo, inferred);
         const changedFilesArray = changedFiles.map(githubFile => githubFile.filename);
         console.log('changedFilesArray', changedFilesArray);
-        const workflowGlobs = await FilesChangedHelper_1.getWorkflowGlobs(client, inputs.configPath);
+        const triggerConfig = inferred.pr ? inputs.configPathPr : inputs.configPath;
+        const workflowGlobs = await FilesChangedHelper_1.getWorkflowGlobs(client, triggerConfig);
         console.log('workflowGlobs', workflowGlobs);
         const workflowsToTrigger = [];
         for (const [workflow, globs] of workflowGlobs.entries()) {
@@ -5659,6 +5663,12 @@ function getInputs() {
         else {
             prNumber = +core_1.getInput('prNumber') || NaN;
         }
+        let tag = '';
+        const ref = github_1.context.ref;
+        const tagPath = "refs/tags/";
+        if (ref && ref.startsWith(tagPath)) {
+            tag = ref.replace(tagPath, '');
+        }
         return {
             githubRepo: `${github_1.context.repo.owner}/${github_1.context.repo.repo}`,
             githubToken,
@@ -5667,7 +5677,11 @@ function getInputs() {
             prNumber,
             sha: github_1.context.sha,
             event: github_1.context.eventName,
-            configPath: core_1.getInput('configuration-path', { required: true }),
+            tag,
+            ref,
+            configPath: core_1.getInput('config-path', { required: true }),
+            configPathPr: core_1.getInput('config-path-pr'),
+            configPathTag: core_1.getInput('config-path-tag'),
             bitriseToken,
             orgSlug: core_1.getInput('bitrise-org-slug') || '',
         };
@@ -11559,10 +11573,10 @@ const core = __importStar(__webpack_require__(470));
 const github = __importStar(__webpack_require__(469));
 const yaml = __importStar(__webpack_require__(414));
 const minimatch_1 = __webpack_require__(595);
-async function getWorkflowGlobs(client, configurationPath) {
-    const configurationContent = await fetchContent(client, configurationPath);
+async function getWorkflowGlobs(client, configPath) {
+    const configContent = await fetchContent(client, configPath);
     // loads (hopefully) a `{[workflow:string]: string | StringOrMatchConfig[]}`, but is `any`:
-    const configObject = yaml.safeLoad(configurationContent);
+    const configObject = yaml.safeLoad(configContent);
     // transform `any` => `Map<string,StringOrMatchConfig[]>` or throw if yaml is malformed:
     return getWorkflowGlobMapFromObject(configObject);
 }

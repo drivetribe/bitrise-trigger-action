@@ -66,8 +66,7 @@ async function triggerBuild(appSlug: string, inputs: Inputs): Promise<any> {
     )
     .then(
       async (res: any): Promise<any> => {
-        const body: string = await res.readBody();
-        return JSON.parse(body);
+        return res.message.statusCode === 200;
       },
     );
 }

@@ -12,15 +12,12 @@ export type StringOrMatchConfig = string | MatchConfig;
 
 export async function getWorkflowGlobs(
   client: github.GitHub,
-  configurationPath: string,
+  configPath: string,
 ): Promise<Map<string, StringOrMatchConfig[]>> {
-  const configurationContent: string = await fetchContent(
-    client,
-    configurationPath,
-  );
+  const configContent: string = await fetchContent(client, configPath);
 
   // loads (hopefully) a `{[workflow:string]: string | StringOrMatchConfig[]}`, but is `any`:
-  const configObject: any = yaml.safeLoad(configurationContent);
+  const configObject: any = yaml.safeLoad(configContent);
 
   // transform `any` => `Map<string,StringOrMatchConfig[]>` or throw if yaml is malformed:
   return getWorkflowGlobMapFromObject(configObject);

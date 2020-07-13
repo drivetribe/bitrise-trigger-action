@@ -10,7 +10,11 @@ export interface Inputs {
   prNumber: number;
   sha: string;
   event: string;
+  tag: string;
+  ref: string;
   configPath: string;
+  configPathPr: string;
+  configPathTag: string;
   bitriseToken: string;
   orgSlug: string;
   [key: string]: string | number;
@@ -61,6 +65,12 @@ export function getInputs(): Inputs {
     } else {
       prNumber = +coreGetInput('prNumber') || NaN;
     }
+    let tag = '';
+    const ref = context.ref;
+    const tagPath = 'refs/tags/';
+    if (ref && ref.startsWith(tagPath)) {
+      tag = ref.replace(tagPath, '');
+    }
     return {
       githubRepo: `${context.repo.owner}/${context.repo.repo}`,
       githubToken,
@@ -71,7 +81,11 @@ export function getInputs(): Inputs {
       prNumber,
       sha: context.sha,
       event: context.eventName,
-      configPath: coreGetInput('configuration-path', {required: true}),
+      tag,
+      ref,
+      configPath: coreGetInput('config-path', {required: true}),
+      configPathPr: coreGetInput('config-path-pr'),
+      configPathTag: coreGetInput('config-path-tag'),
       bitriseToken,
       orgSlug: coreGetInput('bitrise-org-slug') || '',
     } as Inputs;

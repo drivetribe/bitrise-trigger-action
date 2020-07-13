@@ -1131,7 +1131,7 @@ function getSlugFromAppTitle(appTitle, apps) {
     return (appObj === null || appObj === void 0 ? void 0 : appObj.slug) || null;
 }
 function getTriggerBody({ context, prNumber }) {
-    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y;
+    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v;
     let build_params = {};
     if (prNumber) {
         build_params = {
@@ -1150,15 +1150,12 @@ function getTriggerBody({ context, prNumber }) {
         };
     }
     else {
-        console.log('context', context);
         build_params = {
             commit_hash: context.sha,
             commit_message: (_v = (_u = context.payload) === null || _u === void 0 ? void 0 : _u.head_commit) === null || _v === void 0 ? void 0 : _v.message,
-            branch: (_w = context.payload) === null || _w === void 0 ? void 0 : _w.ref.replace('refs/head/', ''),
-            branch_repo_owner: (_y = (_x = context.payload) === null || _x === void 0 ? void 0 : _x.repository) === null || _y === void 0 ? void 0 : _y.owner.login,
+            branch: context.ref.replace('refs/heads/', ''),
         };
     }
-    console.log('build_params', build_params);
     return {
         payload: {
             hook_info: {

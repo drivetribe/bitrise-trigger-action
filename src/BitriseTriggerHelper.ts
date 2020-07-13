@@ -98,15 +98,12 @@ function getTriggerBody({context, prNumber}: Inputs): any {
       diff_url: context.payload?.pull_request?.diff_url,
     };
   } else {
-    console.log('context', context);
     build_params = {
       commit_hash: context.sha,
       commit_message: context.payload?.head_commit?.message,
-      branch: context.payload?.ref.replace('refs/head/', ''),
-      branch_repo_owner: context.payload?.repository?.owner.login,
+      branch: context.ref.replace('refs/heads/', ''),
     };
   }
-  console.log('build_params', build_params);
   return {
     payload: {
       hook_info: {

@@ -57,7 +57,6 @@ async function triggerBuild(
   appSlug: string,
   inputs: Inputs,
 ): Promise<{build_url: string}> {
-  console.log('triggerBuild', inputs.event, inputs.prNumber);
   return await http
     .postJson(`${BASE_URL}/apps/${appSlug}/builds`, getTriggerBody(inputs), {
       Authorization: inputs.bitriseToken,
@@ -99,11 +98,11 @@ function getTriggerBody({context, prNumber}: Inputs): any {
       diff_url: context.payload?.pull_request?.diff_url,
     };
   } else {
-    console.log('context.payload', context.payload);
+    console.log('context', context);
     build_params = {
       commit_hash: context.sha,
-      commit_message: '',
-      // branch: 'feature/platform_subs',
+      commit_message: context.payload?.head_commit?.message,
+      branch: context.payload?.ref.replace('refs/head/', ''),
       branch_repo_owner: context.payload?.repository?.owner.login,
     };
   }

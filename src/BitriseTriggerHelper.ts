@@ -69,9 +69,9 @@ function getSlugFromAppTitle(
 function getTriggerBody({context, prNumber}: Inputs): any {
   let build_params = {};
   if (prNumber) {
-    console.log('base', context.payload?.pull_request?.head);
+    console.log('base', context.payload?.pull_request?.base);
     console.log('head', context.payload?.pull_request?.head);
-    console.log('head', context.payload?.pull_request?.user);
+    console.log('user', context.payload?.pull_request?.user);
     build_params = {
       commit_hash: context.sha,
       commit_message: '',

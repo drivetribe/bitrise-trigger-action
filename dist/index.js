@@ -1122,9 +1122,9 @@ function getTriggerBody({ context, prNumber }) {
     var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s;
     let build_params = {};
     if (prNumber) {
-        console.log('base', (_b = (_a = context.payload) === null || _a === void 0 ? void 0 : _a.pull_request) === null || _b === void 0 ? void 0 : _b.head);
+        console.log('base', (_b = (_a = context.payload) === null || _a === void 0 ? void 0 : _a.pull_request) === null || _b === void 0 ? void 0 : _b.base);
         console.log('head', (_d = (_c = context.payload) === null || _c === void 0 ? void 0 : _c.pull_request) === null || _d === void 0 ? void 0 : _d.head);
-        console.log('head', (_f = (_e = context.payload) === null || _e === void 0 ? void 0 : _e.pull_request) === null || _f === void 0 ? void 0 : _f.user);
+        console.log('user', (_f = (_e = context.payload) === null || _e === void 0 ? void 0 : _e.pull_request) === null || _f === void 0 ? void 0 : _f.user);
         build_params = {
             commit_hash: context.sha,
             commit_message: '',

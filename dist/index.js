@@ -1091,13 +1091,12 @@ async function triggerWorkflows(appNames, inputs) {
     }
     if (inputs.prNumber) {
         // TODO: add comment with build urls if PR
-        console.log('buildUrls', buildUrls);
     }
+    console.log('buildUrls started', buildUrls);
     if (buildUrls.length === appNames.length) {
         return Promise.resolve(true);
     }
     else {
-        console.log('buildUrls', buildUrls);
         console.log('appNames', appNames);
         console.warn('All builds did not start correctly');
         return Promise.reject(new Error('All builds did not start correctly'));

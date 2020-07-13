@@ -1082,16 +1082,18 @@ const BASE_URL = 'https://api.bitrise.io/v0.1';
 // TODO: handle errors
 async function triggerWorkflows(appNames, inputs) {
     const apps = await getBitriseApps(inputs);
-    const results = [];
+    const buildUrls = [];
     for (const appName of appNames) {
         const appSlug = getSlugFromAppTitle(appName, apps);
         if (appSlug) {
-            await triggerBuild(appSlug, inputs).then(res => results.push(res.message.statusCode));
+            await triggerBuild(appSlug, inputs).then(({ build_url }) => buildUrls.push(build_url));
         }
     }
-    return Promise.resolve(results.length > 0
-        ? results.some((code) => code !== 200)
-        : false);
+    if (inputs.prNumber) {
+        // TODO: add comment with build urls if PR
+        console.log('buildUrls', buildUrls);
+    }
+    return Promise.resolve(buildUrls.length === appNames.length);
 }
 exports.triggerWorkflows = triggerWorkflows;
 async function getBitriseApps(inputs) {
@@ -1110,9 +1112,12 @@ async function triggerBuild(appSlug, inputs) {
         Authorization: inputs.bitriseToken,
     })
         .then(async (res) => {
-        var _a;
-        console.log('trigger response', res);
-        return ((_a = res === null || res === void 0 ? void 0 : res.message) === null || _a === void 0 ? void 0 : _a.statusCode) === 200;
+        if (res.statusCode >= 200 && res.statusCode < 300) {
+            return res.result;
+        }
+        else {
+            throw new Error(`Status code was: ${res.statusCode}`);
+        }
     });
 }
 function getSlugFromAppTitle(appTitle, apps) {
@@ -1139,6 +1144,7 @@ function getTriggerBody({ context, prNumber }) {
         };
     }
     else {
+        console.log('context.payload', context.payload);
         build_params = {
             commit_hash: context.sha,
             commit_message: '',

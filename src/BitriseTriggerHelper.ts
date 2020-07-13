@@ -16,20 +16,22 @@ export async function triggerWorkflows(
 ): Promise<boolean> {
   const apps = await getBitriseApps(inputs);
 
-  const results: number[] = [];
+  const buildUrls: string[] = [];
   for (const appName of appNames) {
     const appSlug = getSlugFromAppTitle(appName, apps);
     if (appSlug) {
-      await triggerBuild(appSlug, inputs).then(res =>
-        results.push(res.message.statusCode),
+      await triggerBuild(appSlug, inputs).then(({build_url}) =>
+        buildUrls.push(build_url),
       );
     }
   }
-  return Promise.resolve(
-    results.length > 0
-      ? results.some((code: number): boolean => code !== 200)
-      : false,
-  );
+
+  if (inputs.prNumber) {
+    // TODO: add comment with build urls if PR
+    console.log('buildUrls', buildUrls);
+  }
+
+  return Promise.resolve(buildUrls.length === appNames.length);
 }
 
 async function getBitriseApps(inputs: Inputs): Promise<any> {
@@ -44,16 +46,22 @@ async function getBitriseApps(inputs: Inputs): Promise<any> {
   );
 }
 
-async function triggerBuild(appSlug: string, inputs: Inputs): Promise<any> {
+async function triggerBuild(
+  appSlug: string,
+  inputs: Inputs,
+): Promise<{build_url: string}> {
   console.log('triggerBuild', inputs.event, inputs.prNumber);
   return await http
     .postJson(`${BASE_URL}/apps/${appSlug}/builds`, getTriggerBody(inputs), {
       Authorization: inputs.bitriseToken,
     })
     .then(
-      async (res: any): Promise<boolean> => {
-        console.log('trigger response', res);
-        return res?.message?.statusCode === 200;
+      async (res: any): Promise<{build_url: string}> => {
+        if (res.statusCode >= 200 && res.statusCode < 300) {
+          return res.result;
+        } else {
+          throw new Error(`Status code was: ${res.statusCode}`);
+        }
       },
     );
 }
@@ -84,6 +92,7 @@ function getTriggerBody({context, prNumber}: Inputs): any {
       diff_url: context.payload?.pull_request?.diff_url,
     };
   } else {
+    console.log('context.payload', context.payload);
     build_params = {
       commit_hash: context.sha,
       commit_message: '',

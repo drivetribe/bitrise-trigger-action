@@ -1079,6 +1079,7 @@ exports.triggerWorkflows = void 0;
 const httpm = __importStar(__webpack_require__(539));
 const http = new httpm.HttpClient('bitrise-trigger-action');
 const BASE_URL = 'https://api.bitrise.io/v0.1';
+// TODO: handle errors
 async function triggerWorkflows(appNames, inputs) {
     const apps = await getBitriseApps(inputs);
     console.log('bitrise apps', apps);
@@ -1112,7 +1113,8 @@ async function triggerBuild(appSlug, inputs) {
                 type: 'bitrise',
             },
             build_params: {
-                branch: 'master',
+                commit_hash: inputs.sha,
+                pull_request_id: inputs.prNumber,
             },
         },
     }, { Authorization: inputs.bitriseToken })

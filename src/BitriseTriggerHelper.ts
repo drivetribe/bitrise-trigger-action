@@ -9,6 +9,7 @@ const http: httpm.HttpClient = new httpm.HttpClient('bitrise-trigger-action');
 
 const BASE_URL = 'https://api.bitrise.io/v0.1';
 
+// TODO: handle errors
 export async function triggerWorkflows(
   appNames: string[],
   inputs: Inputs,
@@ -55,9 +56,9 @@ async function triggerBuild(appSlug: string, inputs: Inputs): Promise<any> {
             type: 'bitrise',
           },
           build_params: {
-            branch: 'master',
-            // commit_hash: inputs.sha,
-            // pull_request_id: inputs.prNumber,
+            commit_hash: inputs.sha,
+            pull_request_id: inputs.prNumber,
+            // TODO: add more build params
           },
         },
       },

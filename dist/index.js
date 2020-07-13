@@ -1119,25 +1119,22 @@ function getSlugFromAppTitle(appTitle, apps) {
     return (appObj === null || appObj === void 0 ? void 0 : appObj.slug) || null;
 }
 function getTriggerBody({ context, prNumber }) {
-    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s;
+    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v;
     let build_params = {};
     if (prNumber) {
-        console.log('base', (_b = (_a = context.payload) === null || _a === void 0 ? void 0 : _a.pull_request) === null || _b === void 0 ? void 0 : _b.base);
-        console.log('head', (_d = (_c = context.payload) === null || _c === void 0 ? void 0 : _c.pull_request) === null || _d === void 0 ? void 0 : _d.head);
-        console.log('user', (_f = (_e = context.payload) === null || _e === void 0 ? void 0 : _e.pull_request) === null || _f === void 0 ? void 0 : _f.user);
         build_params = {
             commit_hash: context.sha,
             commit_message: '',
-            branch: (_j = (_h = (_g = context.payload) === null || _g === void 0 ? void 0 : _g.pull_request) === null || _h === void 0 ? void 0 : _h.head) === null || _j === void 0 ? void 0 : _j.ref,
-            // branch_repo_owner: 'drivetribe',
-            // branch_dest: 'master',
-            branch_dest_repo_owner: (_l = (_k = context.payload) === null || _k === void 0 ? void 0 : _k.repository) === null || _l === void 0 ? void 0 : _l.owner.login,
+            branch: (_c = (_b = (_a = context.payload) === null || _a === void 0 ? void 0 : _a.pull_request) === null || _b === void 0 ? void 0 : _b.head) === null || _c === void 0 ? void 0 : _c.ref,
+            branch_repo_owner: (_g = (_f = (_e = (_d = context.payload) === null || _d === void 0 ? void 0 : _d.pull_request) === null || _e === void 0 ? void 0 : _e.head) === null || _f === void 0 ? void 0 : _f.owner) === null || _g === void 0 ? void 0 : _g.login,
+            branch_dest: (_k = (_j = (_h = context.payload) === null || _h === void 0 ? void 0 : _h.pull_request) === null || _j === void 0 ? void 0 : _j.base) === null || _k === void 0 ? void 0 : _k.ref,
+            branch_dest_repo_owner: (_p = (_o = (_m = (_l = context.payload) === null || _l === void 0 ? void 0 : _l.pull_request) === null || _m === void 0 ? void 0 : _m.base) === null || _o === void 0 ? void 0 : _o.owner) === null || _p === void 0 ? void 0 : _p.login,
             pull_request_id: prNumber,
-            pull_request_repository_url: (_o = (_m = context.payload) === null || _m === void 0 ? void 0 : _m.repository) === null || _o === void 0 ? void 0 : _o.git_url,
+            pull_request_repository_url: (_r = (_q = context.payload) === null || _q === void 0 ? void 0 : _q.repository) === null || _r === void 0 ? void 0 : _r.git_url,
             pull_request_merge_branch: `pull/${prNumber}/merge`,
             pull_request_head_branch: `pull/${prNumber}/head`,
             pull_request_author: context.actor,
-            diff_url: (_q = (_p = context.payload) === null || _p === void 0 ? void 0 : _p.pull_request) === null || _q === void 0 ? void 0 : _q.diff_url,
+            diff_url: (_t = (_s = context.payload) === null || _s === void 0 ? void 0 : _s.pull_request) === null || _t === void 0 ? void 0 : _t.diff_url,
         };
     }
     else {
@@ -1145,7 +1142,7 @@ function getTriggerBody({ context, prNumber }) {
             commit_hash: context.sha,
             commit_message: '',
             // branch: 'feature/platform_subs',
-            branch_repo_owner: (_s = (_r = context.payload) === null || _r === void 0 ? void 0 : _r.repository) === null || _s === void 0 ? void 0 : _s.owner.login,
+            branch_repo_owner: (_v = (_u = context.payload) === null || _u === void 0 ? void 0 : _u.repository) === null || _v === void 0 ? void 0 : _v.owner.login,
         };
     }
     console.log('build_params', build_params);

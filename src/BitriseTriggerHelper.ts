@@ -69,18 +69,21 @@ function getSlugFromAppTitle(
 function getTriggerBody({context, prNumber}: Inputs): any {
   let build_params = {};
   if (prNumber) {
+    console.log('base', context.payload?.pull_request?.head);
+    console.log('head', context.payload?.pull_request?.head);
+    console.log('head', context.payload?.pull_request?.user);
     build_params = {
       commit_hash: context.sha,
       commit_message: '',
-      // branch: 'feature/platform_subs',
+      branch: context.payload?.pull_request?.head?.ref,
       // branch_repo_owner: 'drivetribe',
       // branch_dest: 'master',
       branch_dest_repo_owner: context.payload?.repository?.owner.login,
       pull_request_id: prNumber,
       pull_request_repository_url: context.payload?.repository?.git_url,
-      pull_request_merge_branch: context.ref.replace('refs/', ''),
-      pull_request_head_branch: 'pull/3706/head',
-      pull_request_author: context,
+      pull_request_merge_branch: `pull/${prNumber}/merge`,
+      pull_request_head_branch: `pull/${prNumber}/head`,
+      pull_request_author: context.actor,
       diff_url: context.payload?.pull_request?.diff_url,
     };
   } else {

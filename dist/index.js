@@ -1106,7 +1106,9 @@ async function getBitriseApps(inputs) {
 async function triggerBuild(appSlug, inputs) {
     console.log('triggerBuild', inputs.event, inputs.prNumber);
     return await http
-        .postJson(`${BASE_URL}/apps/${appSlug}/builds`, getTriggerBody(inputs), { Authorization: inputs.bitriseToken })
+        .postJson(`${BASE_URL}/apps/${appSlug}/builds`, getTriggerBody(inputs), {
+        Authorization: inputs.bitriseToken,
+    })
         .then(async (res) => {
         console.log('trigger responsecode', res.message.statusCode);
         return res.message.statusCode === 200;
@@ -1117,22 +1119,25 @@ function getSlugFromAppTitle(appTitle, apps) {
     return (appObj === null || appObj === void 0 ? void 0 : appObj.slug) || null;
 }
 function getTriggerBody({ context, prNumber }) {
-    var _a, _b, _c, _d, _e, _f, _g, _h;
+    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s;
     let build_params = {};
     if (prNumber) {
+        console.log('base', (_b = (_a = context.payload) === null || _a === void 0 ? void 0 : _a.pull_request) === null || _b === void 0 ? void 0 : _b.head);
+        console.log('head', (_d = (_c = context.payload) === null || _c === void 0 ? void 0 : _c.pull_request) === null || _d === void 0 ? void 0 : _d.head);
+        console.log('head', (_f = (_e = context.payload) === null || _e === void 0 ? void 0 : _e.pull_request) === null || _f === void 0 ? void 0 : _f.user);
         build_params = {
             commit_hash: context.sha,
             commit_message: '',
-            // branch: 'feature/platform_subs',
+            branch: (_j = (_h = (_g = context.payload) === null || _g === void 0 ? void 0 : _g.pull_request) === null || _h === void 0 ? void 0 : _h.head) === null || _j === void 0 ? void 0 : _j.ref,
             // branch_repo_owner: 'drivetribe',
             // branch_dest: 'master',
-            branch_dest_repo_owner: (_b = (_a = context.payload) === null || _a === void 0 ? void 0 : _a.repository) === null || _b === void 0 ? void 0 : _b.owner.login,
+            branch_dest_repo_owner: (_l = (_k = context.payload) === null || _k === void 0 ? void 0 : _k.repository) === null || _l === void 0 ? void 0 : _l.owner.login,
             pull_request_id: prNumber,
-            pull_request_repository_url: (_d = (_c = context.payload) === null || _c === void 0 ? void 0 : _c.repository) === null || _d === void 0 ? void 0 : _d.git_url,
-            pull_request_merge_branch: context.ref.replace('refs/', ''),
-            pull_request_head_branch: 'pull/3706/head',
-            pull_request_author: context,
-            diff_url: (_f = (_e = context.payload) === null || _e === void 0 ? void 0 : _e.pull_request) === null || _f === void 0 ? void 0 : _f.diff_url,
+            pull_request_repository_url: (_o = (_m = context.payload) === null || _m === void 0 ? void 0 : _m.repository) === null || _o === void 0 ? void 0 : _o.git_url,
+            pull_request_merge_branch: `pull/${prNumber}/merge`,
+            pull_request_head_branch: `pull/${prNumber}/head`,
+            pull_request_author: context.actor,
+            diff_url: (_q = (_p = context.payload) === null || _p === void 0 ? void 0 : _p.pull_request) === null || _q === void 0 ? void 0 : _q.diff_url,
         };
     }
     else {
@@ -1140,7 +1145,7 @@ function getTriggerBody({ context, prNumber }) {
             commit_hash: context.sha,
             commit_message: '',
             // branch: 'feature/platform_subs',
-            branch_repo_owner: (_h = (_g = context.payload) === null || _g === void 0 ? void 0 : _g.repository) === null || _h === void 0 ? void 0 : _h.owner.login,
+            branch_repo_owner: (_s = (_r = context.payload) === null || _r === void 0 ? void 0 : _r.repository) === null || _s === void 0 ? void 0 : _s.owner.login,
         };
     }
     console.log('build_params', build_params);
@@ -2753,18 +2758,14 @@ async function run() {
         // parse input
         const inferred = InputHelper_1.inferInput(inputs.pushBefore, inputs.pushAfter, inputs.prNumber);
         const client = GithubHelper_1.initClient(inputs.githubToken);
-        console.log('inputs', inputs);
-        console.log('inferred', inferred);
         if (inputs.tag) {
             // TODO: check tag regex
             return;
         }
         const changedFiles = await GithubHelper_1.getChangedFiles(client, inputs.githubRepo, inferred);
         const changedFilesArray = changedFiles.map(githubFile => githubFile.filename);
-        console.log('changedFilesArray', changedFilesArray);
         const triggerConfig = inferred.pr ? inputs.configPathPr : inputs.configPath;
         const workflowGlobs = await FilesChangedHelper_1.getWorkflowGlobs(client, triggerConfig);
-        console.log('workflowGlobs', workflowGlobs);
         const workflowsToTrigger = [];
         for (const [workflow, globs] of workflowGlobs.entries()) {
             core.debug(`processing ${workflow}`);
@@ -2772,7 +2773,6 @@ async function run() {
                 workflowsToTrigger.push(workflow);
             }
         }
-        console.log('workflowsToTrigger', workflowsToTrigger);
         BitriseTriggerHelper_1.triggerWorkflows(workflowsToTrigger, inputs);
         return;
     }
@@ -5690,13 +5690,12 @@ function getInputs() {
         else {
             prNumber = +core_1.getInput('prNumber') || NaN;
         }
-        let tag = '';
+        let tag;
         const ref = github_1.context.ref;
         const tagPath = 'refs/tags/';
         if (ref && ref.startsWith(tagPath)) {
             tag = ref.replace(tagPath, '');
         }
-        console.log('GitHub', github_1.GitHub);
         return {
             githubRepo: `${github_1.context.repo.owner}/${github_1.context.repo.repo}`,
             githubToken,
@@ -5710,7 +5709,7 @@ function getInputs() {
             configPathPr: core_1.getInput('config-path-pr'),
             configPathTag: core_1.getInput('config-path-tag'),
             bitriseToken,
-            orgSlug: core_1.getInput('bitrise-org-slug') || '',
+            orgSlug: core_1.getInput('bitrise-org-slug'),
         };
     }
     catch (error) {

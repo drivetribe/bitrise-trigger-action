@@ -1,5 +1,5 @@
 import {warning as coreWarning, getInput as coreGetInput} from '@actions/core';
-import {GitHub, context} from '@actions/github';
+import {context} from '@actions/github';
 import {Context} from '@actions/github/lib/context';
 import {getErrorString} from './UtilsHelper';
 
@@ -11,12 +11,12 @@ export interface Inputs {
   prNumber: number;
   context: Context;
   event: string;
-  tag: string;
+  tag?: string;
   configPath: string;
   configPathPr: string;
   configPathTag: string;
   bitriseToken: string;
-  orgSlug: string;
+  orgSlug?: string;
 }
 
 /**
@@ -64,13 +64,12 @@ export function getInputs(): Inputs {
     } else {
       prNumber = +coreGetInput('prNumber') || NaN;
     }
-    let tag = '';
+    let tag;
     const ref = context.ref;
     const tagPath = 'refs/tags/';
     if (ref && ref.startsWith(tagPath)) {
       tag = ref.replace(tagPath, '');
     }
-    console.log('GitHub', GitHub);
     return {
       githubRepo: `${context.repo.owner}/${context.repo.repo}`,
       githubToken,
@@ -86,7 +85,7 @@ export function getInputs(): Inputs {
       configPathPr: coreGetInput('config-path-pr'),
       configPathTag: coreGetInput('config-path-tag'),
       bitriseToken,
-      orgSlug: coreGetInput('bitrise-org-slug') || '',
+      orgSlug: coreGetInput('bitrise-org-slug'),
     } as Inputs;
   } catch (error) {
     const eString = `Received an issue getting action inputs.`;
@@ -108,7 +107,6 @@ export interface Inferred {
   pr?: number;
   before?: string;
   after?: string;
-  [key: string]: string | number | undefined;
 }
 
 /**

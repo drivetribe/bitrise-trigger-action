@@ -20,9 +20,6 @@ async function run(): Promise<void> {
 
     const client = initClient(inputs.githubToken);
 
-    console.log('inputs', inputs);
-    console.log('inferred', inferred);
-
     if (inputs.tag) {
       // TODO: check tag regex
       return;
@@ -36,7 +33,6 @@ async function run(): Promise<void> {
     const changedFilesArray = changedFiles.map(
       githubFile => githubFile.filename,
     );
-    console.log('changedFilesArray', changedFilesArray);
 
     const triggerConfig = inferred.pr ? inputs.configPathPr : inputs.configPath;
     const workflowGlobs: Map<
@@ -44,7 +40,6 @@ async function run(): Promise<void> {
       StringOrMatchConfig[]
     > = await getWorkflowGlobs(client, triggerConfig);
 
-    console.log('workflowGlobs', workflowGlobs);
     const workflowsToTrigger: string[] = [];
     for (const [workflow, globs] of workflowGlobs.entries()) {
       core.debug(`processing ${workflow}`);
@@ -53,7 +48,6 @@ async function run(): Promise<void> {
       }
     }
 
-    console.log('workflowsToTrigger', workflowsToTrigger);
     triggerWorkflows(workflowsToTrigger, inputs);
     return;
   } catch (error) {

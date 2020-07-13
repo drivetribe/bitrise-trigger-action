@@ -5665,10 +5665,11 @@ function getInputs() {
         }
         let tag = '';
         const ref = github_1.context.ref;
-        const tagPath = "refs/tags/";
+        const tagPath = 'refs/tags/';
         if (ref && ref.startsWith(tagPath)) {
             tag = ref.replace(tagPath, '');
         }
+        console.log('context', github_1.context, github_1.context.payload);
         return {
             githubRepo: `${github_1.context.repo.owner}/${github_1.context.repo.repo}`,
             githubToken,

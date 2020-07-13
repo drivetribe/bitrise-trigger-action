@@ -71,6 +71,7 @@ export function getInputs(): Inputs {
     if (ref && ref.startsWith(tagPath)) {
       tag = ref.replace(tagPath, '');
     }
+    console.log('context', context, context.payload);
     return {
       githubRepo: `${context.repo.owner}/${context.repo.repo}`,
       githubToken,

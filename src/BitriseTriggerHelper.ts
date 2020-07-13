@@ -51,9 +51,9 @@ async function triggerBuild(appSlug: string, inputs: Inputs): Promise<any> {
       Authorization: inputs.bitriseToken,
     })
     .then(
-      async (res: any): Promise<any> => {
-        console.log('trigger responsecode', res.message.statusCode);
-        return res.message.statusCode === 200;
+      async (res: any): Promise<boolean> => {
+        console.log('trigger response', res);
+        return res?.message?.statusCode === 200;
       },
     );
 }

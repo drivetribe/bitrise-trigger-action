@@ -1110,8 +1110,9 @@ async function triggerBuild(appSlug, inputs) {
         Authorization: inputs.bitriseToken,
     })
         .then(async (res) => {
-        console.log('trigger responsecode', res.message.statusCode);
-        return res.message.statusCode === 200;
+        var _a;
+        console.log('trigger response', res);
+        return ((_a = res === null || res === void 0 ? void 0 : res.message) === null || _a === void 0 ? void 0 : _a.statusCode) === 200;
     });
 }
 function getSlugFromAppTitle(appTitle, apps) {

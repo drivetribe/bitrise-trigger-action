@@ -1133,30 +1133,30 @@ function getSlugFromAppTitle(appTitle, apps) {
 function getTriggerBody({ context, prNumber, tag }) {
     var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x;
     let build_params = {};
-    if (prNumber) {
-        console.log('context.payload', context.payload);
+    console.log('context.payload', context.payload);
+    if (tag) {
         build_params = {
             commit_hash: context.sha,
-            commit_message: '',
-            branch: (_c = (_b = (_a = context.payload) === null || _a === void 0 ? void 0 : _a.pull_request) === null || _b === void 0 ? void 0 : _b.head) === null || _c === void 0 ? void 0 : _c.ref,
-            branch_repo_owner: (_g = (_f = (_e = (_d = context.payload) === null || _d === void 0 ? void 0 : _d.pull_request) === null || _e === void 0 ? void 0 : _e.head) === null || _f === void 0 ? void 0 : _f.owner) === null || _g === void 0 ? void 0 : _g.login,
-            branch_dest: (_k = (_j = (_h = context.payload) === null || _h === void 0 ? void 0 : _h.pull_request) === null || _j === void 0 ? void 0 : _j.base) === null || _k === void 0 ? void 0 : _k.ref,
-            branch_dest_repo_owner: (_p = (_o = (_m = (_l = context.payload) === null || _l === void 0 ? void 0 : _l.pull_request) === null || _m === void 0 ? void 0 : _m.base) === null || _o === void 0 ? void 0 : _o.owner) === null || _p === void 0 ? void 0 : _p.login,
-            pull_request_id: prNumber,
-            pull_request_repository_url: (_r = (_q = context.payload) === null || _q === void 0 ? void 0 : _q.repository) === null || _r === void 0 ? void 0 : _r.git_url,
-            pull_request_merge_branch: `pull/${prNumber}/merge`,
-            pull_request_head_branch: `pull/${prNumber}/head`,
-            pull_request_author: context.actor,
-            diff_url: (_t = (_s = context.payload) === null || _s === void 0 ? void 0 : _s.pull_request) === null || _t === void 0 ? void 0 : _t.diff_url,
+            commit_message: (_b = (_a = context.payload) === null || _a === void 0 ? void 0 : _a.head_commit) === null || _b === void 0 ? void 0 : _b.message,
+            tag,
+            branch: context.ref.replace('refs/heads/', ''),
             skip_git_status_report: false,
         };
     }
-    else if (tag) {
+    else if (prNumber) {
         build_params = {
             commit_hash: context.sha,
-            commit_message: (_v = (_u = context.payload) === null || _u === void 0 ? void 0 : _u.head_commit) === null || _v === void 0 ? void 0 : _v.message,
-            tag,
-            branch: context.ref.replace('refs/heads/', ''),
+            commit_message: '',
+            branch: (_e = (_d = (_c = context.payload) === null || _c === void 0 ? void 0 : _c.pull_request) === null || _d === void 0 ? void 0 : _d.head) === null || _e === void 0 ? void 0 : _e.ref,
+            branch_repo_owner: (_j = (_h = (_g = (_f = context.payload) === null || _f === void 0 ? void 0 : _f.pull_request) === null || _g === void 0 ? void 0 : _g.head) === null || _h === void 0 ? void 0 : _h.owner) === null || _j === void 0 ? void 0 : _j.login,
+            branch_dest: (_m = (_l = (_k = context.payload) === null || _k === void 0 ? void 0 : _k.pull_request) === null || _l === void 0 ? void 0 : _l.base) === null || _m === void 0 ? void 0 : _m.ref,
+            branch_dest_repo_owner: (_r = (_q = (_p = (_o = context.payload) === null || _o === void 0 ? void 0 : _o.pull_request) === null || _p === void 0 ? void 0 : _p.base) === null || _q === void 0 ? void 0 : _q.owner) === null || _r === void 0 ? void 0 : _r.login,
+            pull_request_id: prNumber,
+            pull_request_repository_url: (_t = (_s = context.payload) === null || _s === void 0 ? void 0 : _s.repository) === null || _t === void 0 ? void 0 : _t.git_url,
+            pull_request_merge_branch: `pull/${prNumber}/merge`,
+            pull_request_head_branch: `pull/${prNumber}/head`,
+            pull_request_author: context.actor,
+            diff_url: (_v = (_u = context.payload) === null || _u === void 0 ? void 0 : _u.pull_request) === null || _v === void 0 ? void 0 : _v.diff_url,
             skip_git_status_report: false,
         };
     }

@@ -1130,10 +1130,11 @@ function getSlugFromAppTitle(appTitle, apps) {
     const appObj = apps === null || apps === void 0 ? void 0 : apps.data.find(app => app.title === appTitle);
     return (appObj === null || appObj === void 0 ? void 0 : appObj.slug) || null;
 }
-function getTriggerBody({ context, prNumber }) {
-    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v;
+function getTriggerBody({ context, prNumber, tag }) {
+    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x;
     let build_params = {};
     if (prNumber) {
+        console.log('context.payload', context.payload);
         build_params = {
             commit_hash: context.sha,
             commit_message: '',
@@ -1150,10 +1151,19 @@ function getTriggerBody({ context, prNumber }) {
             skip_git_status_report: false,
         };
     }
-    else {
+    else if (tag) {
         build_params = {
             commit_hash: context.sha,
             commit_message: (_v = (_u = context.payload) === null || _u === void 0 ? void 0 : _u.head_commit) === null || _v === void 0 ? void 0 : _v.message,
+            tag,
+            branch: context.ref.replace('refs/heads/', ''),
+            skip_git_status_report: false,
+        };
+    }
+    else {
+        build_params = {
+            commit_hash: context.sha,
+            commit_message: (_x = (_w = context.payload) === null || _w === void 0 ? void 0 : _w.head_commit) === null || _x === void 0 ? void 0 : _x.message,
             branch: context.ref.replace('refs/heads/', ''),
             skip_git_status_report: false,
         };

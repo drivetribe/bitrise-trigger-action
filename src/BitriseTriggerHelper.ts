@@ -80,9 +80,10 @@ function getSlugFromAppTitle(
   return appObj?.slug || null;
 }
 
-function getTriggerBody({context, prNumber}: Inputs): any {
+function getTriggerBody({context, prNumber, tag}: Inputs): any {
   let build_params = {};
   if (prNumber) {
+    console.log('context.payload', context.payload);
     build_params = {
       commit_hash: context.sha,
       commit_message: '',
@@ -96,6 +97,14 @@ function getTriggerBody({context, prNumber}: Inputs): any {
       pull_request_head_branch: `pull/${prNumber}/head`,
       pull_request_author: context.actor,
       diff_url: context.payload?.pull_request?.diff_url,
+      skip_git_status_report: false,
+    };
+  } else if (tag) {
+    build_params = {
+      commit_hash: context.sha,
+      commit_message: context.payload?.head_commit?.message,
+      tag,
+      branch: context.ref.replace('refs/heads/', ''),
       skip_git_status_report: false,
     };
   } else {

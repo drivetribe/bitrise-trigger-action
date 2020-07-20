@@ -1131,7 +1131,7 @@ function getSlugFromAppTitle(appTitle, apps) {
     return (appObj === null || appObj === void 0 ? void 0 : appObj.slug) || null;
 }
 function getTriggerBody({ context, prNumber, tag }) {
-    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x;
+    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z;
     let build_params = {};
     console.log('tag', tag);
     console.log('prNumber', prNumber);
@@ -1142,7 +1142,7 @@ function getTriggerBody({ context, prNumber, tag }) {
             commit_hash: context.sha,
             commit_message: (_b = (_a = context.payload) === null || _a === void 0 ? void 0 : _a.head_commit) === null || _b === void 0 ? void 0 : _b.message,
             tag,
-            // branch: context.ref.replace('refs/heads/', ''),
+            branch: (_d = (_c = context.payload) === null || _c === void 0 ? void 0 : _c.repository) === null || _d === void 0 ? void 0 : _d.default_branch,
             skip_git_status_report: false,
         };
     }
@@ -1150,23 +1150,23 @@ function getTriggerBody({ context, prNumber, tag }) {
         build_params = {
             commit_hash: context.sha,
             commit_message: '',
-            branch: (_e = (_d = (_c = context.payload) === null || _c === void 0 ? void 0 : _c.pull_request) === null || _d === void 0 ? void 0 : _d.head) === null || _e === void 0 ? void 0 : _e.ref,
-            branch_repo_owner: (_j = (_h = (_g = (_f = context.payload) === null || _f === void 0 ? void 0 : _f.pull_request) === null || _g === void 0 ? void 0 : _g.head) === null || _h === void 0 ? void 0 : _h.owner) === null || _j === void 0 ? void 0 : _j.login,
-            branch_dest: (_m = (_l = (_k = context.payload) === null || _k === void 0 ? void 0 : _k.pull_request) === null || _l === void 0 ? void 0 : _l.base) === null || _m === void 0 ? void 0 : _m.ref,
-            branch_dest_repo_owner: (_r = (_q = (_p = (_o = context.payload) === null || _o === void 0 ? void 0 : _o.pull_request) === null || _p === void 0 ? void 0 : _p.base) === null || _q === void 0 ? void 0 : _q.owner) === null || _r === void 0 ? void 0 : _r.login,
+            branch: (_g = (_f = (_e = context.payload) === null || _e === void 0 ? void 0 : _e.pull_request) === null || _f === void 0 ? void 0 : _f.head) === null || _g === void 0 ? void 0 : _g.ref,
+            branch_repo_owner: (_l = (_k = (_j = (_h = context.payload) === null || _h === void 0 ? void 0 : _h.pull_request) === null || _j === void 0 ? void 0 : _j.head) === null || _k === void 0 ? void 0 : _k.owner) === null || _l === void 0 ? void 0 : _l.login,
+            branch_dest: (_p = (_o = (_m = context.payload) === null || _m === void 0 ? void 0 : _m.pull_request) === null || _o === void 0 ? void 0 : _o.base) === null || _p === void 0 ? void 0 : _p.ref,
+            branch_dest_repo_owner: (_t = (_s = (_r = (_q = context.payload) === null || _q === void 0 ? void 0 : _q.pull_request) === null || _r === void 0 ? void 0 : _r.base) === null || _s === void 0 ? void 0 : _s.owner) === null || _t === void 0 ? void 0 : _t.login,
             pull_request_id: prNumber,
-            pull_request_repository_url: (_t = (_s = context.payload) === null || _s === void 0 ? void 0 : _s.repository) === null || _t === void 0 ? void 0 : _t.git_url,
+            pull_request_repository_url: (_v = (_u = context.payload) === null || _u === void 0 ? void 0 : _u.repository) === null || _v === void 0 ? void 0 : _v.git_url,
             pull_request_merge_branch: `pull/${prNumber}/merge`,
             pull_request_head_branch: `pull/${prNumber}/head`,
             pull_request_author: context.actor,
-            diff_url: (_v = (_u = context.payload) === null || _u === void 0 ? void 0 : _u.pull_request) === null || _v === void 0 ? void 0 : _v.diff_url,
+            diff_url: (_x = (_w = context.payload) === null || _w === void 0 ? void 0 : _w.pull_request) === null || _x === void 0 ? void 0 : _x.diff_url,
             skip_git_status_report: false,
         };
     }
     else {
         build_params = {
             commit_hash: context.sha,
-            commit_message: (_x = (_w = context.payload) === null || _w === void 0 ? void 0 : _w.head_commit) === null || _x === void 0 ? void 0 : _x.message,
+            commit_message: (_z = (_y = context.payload) === null || _y === void 0 ? void 0 : _y.head_commit) === null || _z === void 0 ? void 0 : _z.message,
             branch: context.ref.replace('refs/heads/', ''),
             skip_git_status_report: false,
         };

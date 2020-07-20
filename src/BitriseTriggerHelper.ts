@@ -91,7 +91,7 @@ function getTriggerBody({context, prNumber, tag}: Inputs): any {
       commit_hash: context.sha,
       commit_message: context.payload?.head_commit?.message,
       tag,
-      // branch: context.ref.replace('refs/heads/', ''),
+      branch: context.payload?.repository?.default_branch,
       skip_git_status_report: false,
     };
   } else if (prNumber) {

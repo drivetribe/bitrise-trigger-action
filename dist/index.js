@@ -1147,6 +1147,7 @@ function getTriggerBody({ context, prNumber }) {
             pull_request_head_branch: `pull/${prNumber}/head`,
             pull_request_author: context.actor,
             diff_url: (_t = (_s = context.payload) === null || _s === void 0 ? void 0 : _s.pull_request) === null || _t === void 0 ? void 0 : _t.diff_url,
+            skip_git_status_report: false,
         };
     }
     else {
@@ -1154,6 +1155,7 @@ function getTriggerBody({ context, prNumber }) {
             commit_hash: context.sha,
             commit_message: (_v = (_u = context.payload) === null || _u === void 0 ? void 0 : _u.head_commit) === null || _v === void 0 ? void 0 : _v.message,
             branch: context.ref.replace('refs/heads/', ''),
+            skip_git_status_report: false,
         };
     }
     return {
@@ -2766,28 +2768,44 @@ async function run() {
         const inferred = InputHelper_1.inferInput(inputs.pushBefore, inputs.pushAfter, inputs.prNumber);
         const client = GithubHelper_1.initClient(inputs.githubToken);
         if (inputs.tag) {
-            // TODO: check tag regex
-            console.log(`Skipping tag: ${inputs.tag} - not implemented yet`);
+            const workflowGlobs = await FilesChangedHelper_1.getWorkflowGlobs(client, inputs.configPathTag);
+            const workflowsToTrigger = [];
+            for (const [workflow, globs] of workflowGlobs.entries()) {
+                core.debug(`processing ${workflow}`);
+                if (FilesChangedHelper_1.checkTagGlobs(inputs.tag, globs)) {
+                    workflowsToTrigger.push(workflow);
+                }
+            }
+            if (workflowsToTrigger.length) {
+                BitriseTriggerHelper_1.triggerWorkflows(workflowsToTrigger, inputs);
+            }
+            else {
+                console.log('No changes detected, build skipped');
+            }
             return;
         }
-        const changedFiles = await GithubHelper_1.getChangedFiles(client, inputs.githubRepo, inferred);
-        const changedFilesArray = changedFiles.map(githubFile => githubFile.filename);
-        const triggerConfig = inferred.pr ? inputs.configPathPr : inputs.configPath;
-        const workflowGlobs = await FilesChangedHelper_1.getWorkflowGlobs(client, triggerConfig);
-        const workflowsToTrigger = [];
-        for (const [workflow, globs] of workflowGlobs.entries()) {
-            core.debug(`processing ${workflow}`);
-            if (FilesChangedHelper_1.checkGlobs(changedFilesArray, globs)) {
-                workflowsToTrigger.push(workflow);
-            }
-        }
-        if (workflowsToTrigger.length) {
-            BitriseTriggerHelper_1.triggerWorkflows(workflowsToTrigger, inputs);
-        }
         else {
-            console.log('No changes detected, build skipped');
+            const changedFiles = await GithubHelper_1.getChangedFiles(client, inputs.githubRepo, inferred);
+            const changedFilesArray = changedFiles.map(githubFile => githubFile.filename);
+            const triggerConfig = inferred.pr
+                ? inputs.configPathPr
+                : inputs.configPath;
+            const workflowGlobs = await FilesChangedHelper_1.getWorkflowGlobs(client, triggerConfig);
+            const workflowsToTrigger = [];
+            for (const [workflow, globs] of workflowGlobs.entries()) {
+                core.debug(`processing ${workflow}`);
+                if (FilesChangedHelper_1.checkGlobs(changedFilesArray, globs)) {
+                    workflowsToTrigger.push(workflow);
+                }
+            }
+            if (workflowsToTrigger.length) {
+                BitriseTriggerHelper_1.triggerWorkflows(workflowsToTrigger, inputs);
+            }
+            else {
+                console.log('No changes detected, build skipped');
+            }
+            return;
         }
-        return;
     }
     catch (error) {
         core.error(error);
@@ -11600,7 +11618,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.checkGlobs = exports.getWorkflowGlobs = void 0;
+exports.checkTagGlobs = exports.checkGlobs = exports.getWorkflowGlobs = void 0;
 const core = __importStar(__webpack_require__(470));
 const github = __importStar(__webpack_require__(469));
 const yaml = __importStar(__webpack_require__(414));
@@ -11659,11 +11677,29 @@ function checkGlobs(changedFiles, globs) {
     return false;
 }
 exports.checkGlobs = checkGlobs;
-function isMatch(changedFile, matchers) {
-    core.debug(`    matching patterns against file ${changedFile}`);
+function checkTagGlobs(tag, globs) {
+    for (const glob of globs) {
+        core.debug(`checking pattern ${JSON.stringify(glob)}`);
+        const matchConfig = toMatchConfig(glob);
+        if (matchConfig.any !== undefined) {
+            if (!checkAnyTagGlobs(tag, matchConfig.any)) {
+                return false;
+            }
+        }
+        return true;
+    }
+    return false;
+}
+exports.checkTagGlobs = checkTagGlobs;
+function checkAnyTagGlobs(tag, globs) {
+    const matchers = globs.map(g => new minimatch_1.Minimatch(g));
+    return isMatch(tag, matchers);
+}
+function isMatch(changedFileOrTag, matchers) {
+    core.debug(`    matching patterns against file or tag ${changedFileOrTag}`);
     for (const matcher of matchers) {
         core.debug(`   - ${printPattern(matcher)}`);
-        if (!matcher.match(changedFile)) {
+        if (!matcher.match(changedFileOrTag)) {
             core.debug(`   ${printPattern(matcher)} did not match`);
             return false;
         }

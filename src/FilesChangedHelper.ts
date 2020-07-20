@@ -84,11 +84,33 @@ export function checkGlobs(
   return false;
 }
 
-function isMatch(changedFile: string, matchers: IMinimatch[]): boolean {
-  core.debug(`    matching patterns against file ${changedFile}`);
+export function checkTagGlobs(
+  tag: string,
+  globs: StringOrMatchConfig[],
+): boolean {
+  for (const glob of globs) {
+    core.debug(`checking pattern ${JSON.stringify(glob)}`);
+    const matchConfig = toMatchConfig(glob);
+    if (matchConfig.any !== undefined) {
+      if (!checkAnyTagGlobs(tag, matchConfig.any)) {
+        return false;
+      }
+    }
+    return true;
+  }
+  return false;
+}
+
+function checkAnyTagGlobs(tag: string, globs: string[]): boolean {
+  const matchers = globs.map(g => new Minimatch(g));
+  return isMatch(tag, matchers);
+}
+
+function isMatch(changedFileOrTag: string, matchers: IMinimatch[]): boolean {
+  core.debug(`    matching patterns against file or tag ${changedFileOrTag}`);
   for (const matcher of matchers) {
     core.debug(`   - ${printPattern(matcher)}`);
-    if (!matcher.match(changedFile)) {
+    if (!matcher.match(changedFileOrTag)) {
       core.debug(`   ${printPattern(matcher)} did not match`);
       return false;
     }

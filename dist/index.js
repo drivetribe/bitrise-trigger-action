@@ -1133,13 +1133,16 @@ function getSlugFromAppTitle(appTitle, apps) {
 function getTriggerBody({ context, prNumber, tag }) {
     var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x;
     let build_params = {};
+    console.log('tag', tag);
+    console.log('prNumber', prNumber);
+    console.log('context', context);
     console.log('context.payload', context.payload);
     if (tag) {
         build_params = {
             commit_hash: context.sha,
             commit_message: (_b = (_a = context.payload) === null || _a === void 0 ? void 0 : _a.head_commit) === null || _b === void 0 ? void 0 : _b.message,
             tag,
-            branch: context.ref.replace('refs/heads/', ''),
+            // branch: context.ref.replace('refs/heads/', ''),
             skip_git_status_report: false,
         };
     }
@@ -1168,6 +1171,7 @@ function getTriggerBody({ context, prNumber, tag }) {
             skip_git_status_report: false,
         };
     }
+    console.log('build_params', build_params);
     return {
         payload: {
             hook_info: {

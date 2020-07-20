@@ -82,16 +82,11 @@ function getSlugFromAppTitle(
 
 function getTriggerBody({context, prNumber, tag}: Inputs): any {
   let build_params = {};
-  console.log('tag', tag);
-  console.log('prNumber', prNumber);
-  console.log('context', context);
-  console.log('context.payload', context.payload);
   if (tag) {
     build_params = {
       commit_hash: context.sha,
       commit_message: context.payload?.head_commit?.message,
       tag,
-      branch: context.payload?.repository?.default_branch,
       skip_git_status_report: false,
     };
   } else if (prNumber) {
